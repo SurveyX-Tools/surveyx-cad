@@ -1,0 +1,81 @@
+name: Build SurveyX CAD
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Version
+        id: ver
+        shell: pwsh
+        run: |
+          $v = '1.0.0'
+          if ($env:GITHUB_REF -like 'refs/tags/v*') { $v = $env:GITHUB_REF_NAME.TrimStart('v') }
+          "value=$v" >> $env:GITHUB_OUTPUT
+          Write-Host "Version: $v"
+
+      - name: Unit tests (coordinate math, file readers/writers)
+        run: dotnet test tests/SurveyXCAD.Tests/SurveyXCAD.Tests.csproj -c Release --logger "console;verbosity=normal"
+
+      - name: Build plugin (net48 + net8)
+        run: >
+          dotnet build src/SurveyXCAD/SurveyXCAD.csproj -c Release
+          -p:Version=${{ steps.ver.outputs.value }}
+          -p:AssemblyVersion=${{ steps.ver.outputs.value }}.0
+          -p:FileVersion=${{ steps.ver.outputs.value }}.0
+
+      - name: Assemble AutoCAD bundle
+        shell: pwsh
+        run: |
+          $v = '${{ steps.ver.outputs.value }}'
+          $b = 'out/bundle/SurveyXCAD.bundle'
+          New-Item -ItemType Directory -Force "$b/Contents/net48", "$b/Contents/net8" | Out-Null
+          Copy-Item src/SurveyXCAD/bin/Release/net48/SurveyXCAD.dll "$b/Contents/net48/"
+          Copy-Item src/SurveyXCAD/bin/Release/net8.0-windows/SurveyXCAD.dll "$b/Contents/net8/"
+          (Get-Content bundle/PackageContents.xml -Raw) -replace '1\.0\.0', $v | Set-Content "$b/PackageContents.xml" -Encoding utf8
+          Get-ChildItem -Recurse $b | Select-Object FullName, Length
+          Compress-Archive -Path $b -DestinationPath "out/SurveyXCAD_Bundle_$v.zip" -Force
+
+      - name: Build installer (Inno Setup)
+        shell: pwsh
+        run: |
+          if (-not (Get-Command iscc -ErrorAction SilentlyContinue)) {
+            $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+            if (-not (Test-Path $iscc)) { choco install innosetup -y --no-progress | Out-Null }
+          }
+          $iscc = (Get-Command iscc -ErrorAction SilentlyContinue).Source
+          if (-not $iscc) { $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" }
+          & $iscc "/DAppVer=${{ steps.ver.outputs.value }}" installer/SurveyXCAD.iss
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SurveyXCAD-${{ steps.ver.outputs.value }}
+          path: |
+            out/*.exe
+            out/*.zip
+
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: SurveyX CAD ${{ steps.ver.outputs.value }}
+          body_path: RELEASE_NOTES.md
+          files: |
+            out/*.exe
+            out/*.zip
