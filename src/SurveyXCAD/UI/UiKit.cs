@@ -45,7 +45,7 @@ namespace SurveyX.UI
             var lbl = new Label
             {
                 Text = Lang.T(subtitleKey), ForeColor = Color.White, Dock = DockStyle.Fill,
-                Font = new Font("Segoe UI", 12f, FontStyle.Bold), TextAlign = ContentAlignment.MiddleLeft, AutoEllipsis = true,
+                Font = new Font("Segoe UI", 12f, FontStyle.Bold), TextAlign = ContentAlignment.MiddleLeft, AutoEllipsis = true, UseMnemonic = false,
             };
             var help = new Button
             {
@@ -94,15 +94,35 @@ namespace SurveyX.UI
         public static Label Lbl(string key, bool bold = false) => new Label
         {
             Text = Lang.T(key), AutoSize = true, Anchor = AnchorStyles.Left | AnchorStyles.Right,
-            Margin = new Padding(3, 7, 3, 3), Font = bold ? new Font("Segoe UI", 9.75f, FontStyle.Bold) : null,
+            Margin = new Padding(3, 7, 3, 3), Font = bold ? new Font("Segoe UI", 9.75f, FontStyle.Bold) : null, UseMnemonic = false,
         };
+
+        /// <summary>Label + control kept together on one line (never split by wrapping).</summary>
+        public static FlowLayoutPanel Pair(string key, Control c)
+        {
+            var f = new FlowLayoutPanel { AutoSize = true, WrapContents = false, Margin = new Padding(0, 0, 10, 0) };
+            f.Controls.Add(Lbl(key));
+            f.Controls.Add(c);
+            return f;
+        }
+
+        /// <summary>Adds an empty last row that takes the spare height, so real rows keep their natural size and alignment.</summary>
+        public static void EndRows(TableLayoutPanel t)
+        {
+            int used = t.Controls.Cast<Control>().Select(ctl => t.GetRow(ctl)).DefaultIfEmpty(-1).Max() + 1;
+            t.RowCount = Math.Max(t.RowCount, used) + 1;
+            for (int i = 0; i < t.RowCount - 1; i++)
+                if (i < t.RowStyles.Count) t.RowStyles[i] = new RowStyle(SizeType.AutoSize); else t.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            t.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            t.Controls.Add(new Panel { Height = 1, Margin = new Padding(0) }, 0, t.RowCount - 1);
+        }
 
         public static Button Btn(string key, bool primary = false)
         {
             var b = new Button
             {
                 Text = Lang.T(key), AutoSize = true, MinimumSize = new Size(96, 32), Padding = new Padding(8, 2, 8, 2),
-                FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, Margin = new Padding(4),
+                FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, Margin = new Padding(4), UseMnemonic = false,
             };
             if (primary) { b.BackColor = SxForm.Accent; b.ForeColor = Color.White; b.FlatAppearance.BorderColor = SxForm.Accent; }
             else { b.BackColor = Color.White; b.FlatAppearance.BorderColor = Color.Silver; }

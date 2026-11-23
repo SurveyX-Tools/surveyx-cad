@@ -389,10 +389,11 @@ namespace SurveyX.Core
             Func<string, string> L = k => english ? Lang.En(k) : Lang.T(k);
             var inv = System.Globalization.CultureInfo.InvariantCulture;
             string F(double v) => v.ToString("0.00", inv);
+            string Rng(double a, double b) => english || !Lang.IsArabic ? F(a) + " – " + F(b) : "\u202A" + F(a) + " – " + F(b) + "\u202C";
             if (c == 0) return L("Cut") + " > " + F(-CutFillBreaks[0]);
-            if (c < 4) return L("Cut") + " " + F(-CutFillBreaks[c]) + " – " + F(-CutFillBreaks[c - 1]);
+            if (c < 4) return L("Cut") + " " + Rng(-CutFillBreaks[c], -CutFillBreaks[c - 1]);
             if (c == 4) return L("OnLevel") + " ±" + F(CutFillBreaks[4]);
-            if (c < 8) return L("Fill") + " " + F(CutFillBreaks[c - 1]) + " – " + F(CutFillBreaks[c]);
+            if (c < 8) return L("Fill") + " " + Rng(CutFillBreaks[c - 1], CutFillBreaks[c]);
             return L("Fill") + " > " + F(CutFillBreaks[7]);
         }
     }

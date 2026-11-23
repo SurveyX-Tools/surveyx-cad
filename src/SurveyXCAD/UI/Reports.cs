@@ -41,7 +41,7 @@ namespace SurveyX.UI
             public Graphics G;
             public int Y;
             public bool Rtl;
-            public Font Body, Small, Bold, Title, Big;
+            public Font Body, Small, SmallBold, Bold, Title, Big;
         }
 
         public static void SavePdf(ReportDoc d, string path)
@@ -72,6 +72,7 @@ namespace SurveyX.UI
             var c = new Ctx { Rtl = Lang.IsArabic };
             c.Body = new Font("Segoe UI", 21, GraphicsUnit.Pixel);
             c.Small = new Font("Segoe UI", 17, GraphicsUnit.Pixel);
+            c.SmallBold = new Font("Segoe UI", 17, FontStyle.Bold, GraphicsUnit.Pixel);
             c.Bold = new Font("Segoe UI", 21, FontStyle.Bold, GraphicsUnit.Pixel);
             c.Title = new Font("Segoe UI", 34, FontStyle.Bold, GraphicsUnit.Pixel);
             c.Big = new Font("Segoe UI", 30, FontStyle.Bold, GraphicsUnit.Pixel);
@@ -94,7 +95,7 @@ namespace SurveyX.UI
             }
             finally
             {
-                c.Body.Dispose(); c.Small.Dispose(); c.Bold.Dispose(); c.Title.Dispose(); c.Big.Dispose();
+                c.Body.Dispose(); c.Small.Dispose(); c.SmallBold.Dispose(); c.Bold.Dispose(); c.Title.Dispose(); c.Big.Dispose();
             }
         }
 
@@ -112,8 +113,20 @@ namespace SurveyX.UI
         {
             using (var b = new SolidBrush(col))
             using (var sf = Fmt(c, h, v))
-                c.G.DrawString(s ?? "", f, b, r, sf);
+                c.G.DrawString(c.Rtl ? Ltr(s) : (s ?? ""), f, b, r, sf);
         }
+
+        /// <summary>In an Arabic (RTL) page, text without Arabic letters (numbers with units, codes, English names)
+        /// is embedded left-to-right so "3,664.93 m³" is not displayed as "m³ 3,664.93".</summary>
+        internal static string Ltr(string s)
+        {
+            if (string.IsNullOrEmpty(s)) return s ?? "";
+            foreach (char ch in s) if (ch >= '\u0600' && ch <= '\u06FF') return s;
+            return "\u202A" + s + "\u202C";
+        }
+
+        private static Font Fit(Ctx c, string s, Font normal, Font small, int width) =>
+            c.G.MeasureString(s ?? "", normal).Width <= width ? normal : small;
 
         private static void Ensure(Ctx c, ReportDoc d, int need)
         {
@@ -174,7 +187,7 @@ namespace SurveyX.UI
                 if (col == 0) Ensure(c, d, rowH);
                 var (k, v) = d.Info[i];
                 Text(c, k, c.Small, Color.Gray, R(c, x, c.Y, 210, rowH));
-                Text(c, v, c.Bold, Color.Black, R(c, x + 210, c.Y, colW - 220, rowH));
+                Text(c, v, Fit(c, v, c.Bold, c.Small, colW - 220), Color.Black, R(c, x + 210, c.Y, colW - 220, rowH));
                 if (col == 1 || i == d.Info.Count - 1) c.Y += rowH;
             }
             c.Y += 16;
@@ -233,34 +246,46 @@ namespace SurveyX.UI
             var weights = d.ColWeights ?? d.Headers.Select(_ => 1f).ToArray();
             float sum = weights.Sum();
             var widths = weights.Select(w => (int)(tw * w / sum)).ToArray();
+            int RowHeight(string[] cells, Font f, int min)
+            {
+                int h = min;
+                for (int i = 0; i < cells.Length && i < widths.Length; i++)
+                {
+                    var sz = c.G.MeasureString(c.Rtl ? Ltr(cells[i]) : cells[i] ?? "", f, widths[i] - 12);
+                    h = Math.Max(h, (int)Math.Ceiling(sz.Height) + 10);
+                }
+                return Math.Min(h, min * 3);
+            }
             void HeaderRow()
             {
+                int hh = RowHeight(d.Headers, c.SmallBold, rh + 4);
                 int x = M;
-                using (var hb = new SolidBrush(Accent)) c.G.FillRectangle(hb, M, c.Y, tw, rh + 4);
+                using (var hb = new SolidBrush(Accent)) c.G.FillRectangle(hb, M, c.Y, tw, hh);
                 for (int i = 0; i < d.Headers.Length; i++)
                 {
-                    Text(c, d.Headers[i], c.Bold, Color.White, R(c, x + 6, c.Y, widths[i] - 12, rh + 4), StringAlignment.Center);
+                    Text(c, d.Headers[i], c.SmallBold, Color.White, R(c, x + 6, c.Y, widths[i] - 12, hh), StringAlignment.Center);
                     x += widths[i];
                 }
-                c.Y += rh + 4;
+                c.Y += hh;
             }
-            Ensure(c, d, rh * 3 + 50);
+            Ensure(c, d, rh * 4 + 50);
             if (!string.IsNullOrEmpty(d.TableTitle)) { Text(c, d.TableTitle, c.Bold, Accent, R(c, M, c.Y, tw, 36)); c.Y += 40; }
             HeaderRow();
             int n = Math.Min(d.Rows.Count, MaxTableRows);
             for (int r = 0; r < n; r++)
             {
-                if (c.Y + rh > H - M - 40) { c.G.Dispose(); NewPage(c, d, first: false); HeaderRow(); }
+                int h = RowHeight(d.Rows[r], c.Small, rh);
+                if (c.Y + h > H - M - 40) { c.G.Dispose(); NewPage(c, d, first: false); HeaderRow(); }
                 Color bg = d.RowColors.Count > r && d.RowColors[r].HasValue ? d.RowColors[r].Value : (r % 2 == 0 ? Color.White : Color.FromArgb(0xF6, 0xF8, 0xFA));
-                using (var b = new SolidBrush(bg)) c.G.FillRectangle(b, M, c.Y, tw, rh);
+                using (var b = new SolidBrush(bg)) c.G.FillRectangle(b, M, c.Y, tw, h);
                 int x = M;
                 for (int i = 0; i < d.Headers.Length && i < d.Rows[r].Length; i++)
                 {
-                    Text(c, d.Rows[r][i], c.Small, Color.Black, R(c, x + 6, c.Y, widths[i] - 12, rh), StringAlignment.Center);
+                    Text(c, d.Rows[r][i], c.Small, Color.Black, R(c, x + 6, c.Y, widths[i] - 12, h), StringAlignment.Center);
                     x += widths[i];
                 }
-                using (var p = new Pen(Color.FromArgb(0xE0, 0xE0, 0xE0))) c.G.DrawLine(p, M, c.Y + rh, M + tw, c.Y + rh);
-                c.Y += rh;
+                using (var p = new Pen(Color.FromArgb(0xE0, 0xE0, 0xE0))) c.G.DrawLine(p, M, c.Y + h, M + tw, c.Y + h);
+                c.Y += h;
             }
             if (d.Rows.Count > n)
             {

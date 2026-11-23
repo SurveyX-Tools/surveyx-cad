@@ -44,10 +44,10 @@ namespace SurveyX.UI
             _area.Text = "";
 
             var opts = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, Padding = new Padding(6) };
-            opts.Controls.Add(UiKit.Lbl("GridCell")); opts.Controls.Add(_cell);
-            opts.Controls.Add(UiKit.Lbl("MaxEdge")); opts.Controls.Add(_maxEdge);
-            opts.Controls.Add(UiKit.Lbl("ReportDate")); opts.Controls.Add(_date);
-            opts.Controls.Add(UiKit.Lbl("AreaName")); opts.Controls.Add(_area);
+            opts.Controls.Add(UiKit.Pair("GridCell", _cell));
+            opts.Controls.Add(UiKit.Pair("MaxEdge", _maxEdge));
+            opts.Controls.Add(UiKit.Pair("ReportDate", _date));
+            opts.Controls.Add(UiKit.Pair("AreaName", _area));
 
             var calc = UiKit.Btn("Calculate", true);
             calc.Click += (s, e) => Calculate();
@@ -132,7 +132,7 @@ namespace SurveyX.UI
             {
                 double d = p.Diff;
                 short aci = (short)(Math.Abs(d) <= ColorScale.CutFillBreaks[4] ? 3 : d < 0 ? 1 : 5);
-                return (p.Point.E, p.Point.N, p.Point.Z, (d >= 0 ? "+" : "") + d.ToString("0.000", Inv), aci);
+                return (p.Point.E, p.Point.N, p.Point.Z, LevelCheckForm.Signed(d), aci);
             }).ToList();
             string layer = PointDrawer.Layer("CUTFILL_DIFF");
             CadDraw.ClearLayer(layer);

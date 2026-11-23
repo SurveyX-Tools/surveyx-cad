@@ -20,7 +20,7 @@ namespace SurveyX.UI
             d.Info.Add((Lang.T("Date"), date.ToString("yyyy-MM-dd", Inv)));
             d.Info.Add((Lang.T("OglSourceShort"), oglName));
             d.Info.Add((Lang.T("NewSurveyShort"), newName));
-            d.Info.Add((Lang.T("Method"), Lang.T("GridMethod") + " " + r.Cell.ToString("0.###", Inv) + " m"));
+            d.Info.Add((Lang.T("Method"), string.Format(Lang.T("GridMethodFmt"), r.Cell.ToString("0.###", Inv))));
             d.Info.Add((Lang.T("PointsCount"), newCount.ToString(Inv)));
             d.Cards.Add((Lang.T("CutVolume"), r.CutVolume.ToString("N2") + " m³", Color.FromArgb(229, 57, 53)));
             d.Cards.Add((Lang.T("FillVolume"), r.FillVolume.ToString("N2") + " m³", Color.FromArgb(30, 136, 229)));
@@ -47,7 +47,7 @@ namespace SurveyX.UI
                 d.Rows.Add(new[]
                 {
                     (k++).ToString(Inv), p.Point.Name, p.Point.E.ToString("F3", Inv), p.Point.N.ToString("F3", Inv), p.Point.Z.ToString("F3", Inv),
-                    has ? p.RefZ.ToString("F3", Inv) : "—", has ? (p.Diff >= 0 ? "+" : "") + p.Diff.ToString("F3", Inv) : "—",
+                    has ? p.RefZ.ToString("F3", Inv) : "—", has ? LevelCheckForm.Signed(p.Diff) : "—",
                 });
                 if (!has) d.RowColors.Add(null);
                 else
@@ -86,7 +86,7 @@ namespace SurveyX.UI
             d.Legend.Add((Color.FromArgb(229, 57, 53), Lang.T("Fail")));
             d.TableTitle = Lang.T("LevelTable");
             d.Headers = new[] { "#", Lang.T("ColName"), "E", "N", Lang.T("AsBuiltZ"), Lang.T("DesignZ"), Lang.T("Diff"), Lang.T("Result") };
-            d.ColWeights = new[] { 0.6f, 1.1f, 1.6f, 1.8f, 1.2f, 1.2f, 1f, 1f };
+            d.ColWeights = new[] { 0.5f, 0.9f, 1.5f, 1.7f, 1.2f, 1.2f, 1.2f, 1f };
             int k = 1;
             foreach (var row in r.Rows)
             {
@@ -115,12 +115,12 @@ namespace SurveyX.UI
             }
             d.TableTitle = Lang.T("P6Table");
             d.Headers = new[] { Lang.T("P6Id"), Lang.T("P6Name"), Lang.T("P6Finish"), Lang.T("P6Pct"), Lang.T("PlannedQty"), Lang.T("ExecutedQty"), Lang.T("DrawingPct"), Lang.T("Status") };
-            d.ColWeights = new[] { 1.1f, 3f, 1.1f, 0.8f, 1f, 1f, 0.9f, 1.1f };
+            d.ColWeights = new[] { 1f, 2.4f, 1.1f, 0.7f, 1.2f, 1.2f, 0.9f, 1f };
             foreach (var a in s.Activities)
             {
                 var c = P6Colors.StateColor(a.State(s.DataDate));
                 d.Rows.Add(new[] { a.Id, a.Name, a.Finish?.ToString("yyyy-MM-dd", Inv) ?? "", a.P6Percent.ToString("0.#", Inv),
-                    a.PlannedQty > 0 ? a.PlannedQty.ToString("N2") + " " + a.Unit : "", a.ExecutedQty > 0 ? a.ExecutedQty.ToString("N2") + " " + a.Unit : "",
+                    a.PlannedQty > 0 ? a.PlannedQty.ToString("N0", Inv) + " " + a.Unit : "", a.ExecutedQty > 0 ? a.ExecutedQty.ToString("N0", Inv) + " " + a.Unit : "",
                     a.DrawingPercent >= 0 ? a.DrawingPercent.ToString("0.#", Inv) + "%" : "—", PrimaveraForm.StateText(a.State(s.DataDate)) });
                 d.RowColors.Add(Color.FromArgb(60, c.r, c.g, c.b).Blend());
             }

@@ -57,12 +57,12 @@ namespace SurveyX.UI
             };
 
             var o1 = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, Padding = new Padding(6) };
-            o1.Controls.Add(UiKit.Lbl("DesignMode")); o1.Controls.Add(_mode);
-            o1.Controls.Add(UiKit.Lbl("Radius")); o1.Controls.Add(_radius);
+            o1.Controls.Add(UiKit.Pair("DesignMode", _mode));
+            o1.Controls.Add(UiKit.Pair("Radius", _radius));
             var o2 = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, Padding = new Padding(6) };
-            o2.Controls.Add(UiKit.Lbl("Element")); o2.Controls.Add(_preset); o2.Controls.Add(_element);
-            o2.Controls.Add(UiKit.Lbl("TolPlus")); o2.Controls.Add(_plus);
-            o2.Controls.Add(UiKit.Lbl("TolMinus")); o2.Controls.Add(_minus);
+            o2.Controls.Add(UiKit.Pair("Element", _preset)); o2.Controls.Add(_element);
+            o2.Controls.Add(UiKit.Pair("TolPlus", _plus));
+            o2.Controls.Add(UiKit.Pair("TolMinus", _minus));
             var check = UiKit.Btn("CheckLevels", true);
             check.Click += (s, e) => Run();
             o2.Controls.Add(check);
@@ -148,7 +148,12 @@ namespace SurveyX.UI
             finally { Cursor = Cursors.Default; }
         }
 
-        internal static string Signed(double v) => (v >= 0 ? "+" : "") + v.ToString("0.000", CultureInfo.InvariantCulture);
+        internal static string Signed(double v)
+        {
+            v = Math.Round(v, 3);
+            if (v == 0) return "0.000";
+            return (v > 0 ? "+" : "") + v.ToString("0.000", CultureInfo.InvariantCulture);
+        }
 
         private void Draw()
         {

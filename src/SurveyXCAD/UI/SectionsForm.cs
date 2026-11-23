@@ -44,12 +44,12 @@ namespace SurveyX.UI
             _alignLbl.Text = Lang.T("NoAlignment");
 
             var p = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, Padding = new Padding(6) };
-            p.Controls.Add(UiKit.Lbl("Interval")); p.Controls.Add(_interval);
-            p.Controls.Add(UiKit.Lbl("LeftWidth")); p.Controls.Add(_left);
-            p.Controls.Add(UiKit.Lbl("RightWidth")); p.Controls.Add(_right);
-            p.Controls.Add(UiKit.Lbl("OffsetStep")); p.Controls.Add(_step);
-            p.Controls.Add(UiKit.Lbl("VertExag")); p.Controls.Add(_vex);
-            p.Controls.Add(UiKit.Lbl("StartChainage")); p.Controls.Add(_start);
+            p.Controls.Add(UiKit.Pair("Interval", _interval));
+            p.Controls.Add(UiKit.Pair("LeftWidth", _left));
+            p.Controls.Add(UiKit.Pair("RightWidth", _right));
+            p.Controls.Add(UiKit.Pair("OffsetStep", _step));
+            p.Controls.Add(UiKit.Pair("VertExag", _vex));
+            p.Controls.Add(UiKit.Pair("StartChainage", _start));
 
             var bLong = UiKit.Btn("DrawLongSection"); bLong.Click += (s, e) => LongSection();
             var bCross = UiKit.Btn("DrawCrossSections"); bCross.Click += (s, e) => CrossSections();

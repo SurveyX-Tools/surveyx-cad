@@ -201,6 +201,7 @@ namespace SurveyX.UI
             t.Controls.Add(go, 0, 3); t.SetColumnSpan(go, 3);
             _lblFileStatus.Height = 60;
             t.Controls.Add(_lblFileStatus, 0, 4); t.SetColumnSpan(_lblFileStatus, 3);
+            UiKit.EndRows(t);
             page.Controls.Add(t);
             return page;
         }

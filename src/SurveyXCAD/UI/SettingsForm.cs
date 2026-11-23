@@ -66,6 +66,7 @@ namespace SurveyX.UI
             Row("PreparedBy", _prepared);
             Row("SubmittedTo", _submitted);
 
+            UiKit.EndRows(t);
             var ok = UiKit.Btn("Save", true);
             var cancel = UiKit.Btn("Cancel");
             ok.Click += (s, e) =>

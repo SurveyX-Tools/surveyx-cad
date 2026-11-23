@@ -50,6 +50,7 @@ namespace SurveyX.UI
             var hint = new Label { Text = Lang.T("DrawingCrsHint"), AutoSize = true, ForeColor = Color.DimGray, MaximumSize = new Size(440, 0) };
             t.Controls.Add(hint, 1, 6);
 
+            UiKit.EndRows(t);
             var save = UiKit.Btn("SaveFile", true);
             var cancel = UiKit.Btn("Cancel");
             save.Click += (s, e) => DoSave();
