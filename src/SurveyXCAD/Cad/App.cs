@@ -23,7 +23,7 @@ namespace SurveyX.Cad
             {
                 var doc = AcApp.DocumentManager.MdiActiveDocument;
                 doc?.Editor.WriteMessage("\n" + AppInfo.Name + " " + AppInfo.Version + " loaded — by " + AppInfo.Author +
-                    ". Commands: SXIMPORT, SXEXPORT, SXCONVERT, SXTABLE, SXLABEL, SXPOINT, SXSETTINGS, SXHELP\n");
+                    ". Ribbon tab \"SurveyX\" or type SXHELP for all commands\n");
             }
             catch { }
             if (Settings.Current.CheckUpdates) Updater.CheckInBackground();

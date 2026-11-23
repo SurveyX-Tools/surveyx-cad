@@ -22,6 +22,27 @@ namespace SurveyX.Core
         public bool CheckUpdates = true;
         public string SkippedVersion = "";
 
+        // reports
+        public string CompanyName = "";
+        public string LogoPath = "";
+        public string ProjectName = "";
+        public string PreparedBy = "";
+        public string SubmittedTo = "";
+        // surfaces / earthworks
+        public double GridCell = 0;          // 0 = automatic
+        public double MaxEdge = 50;          // TIN max triangle edge (m), 0 = no limit
+        public double TolPlus = 0.010;       // level check tolerances (m)
+        public double TolMinus = 0.010;
+        public double ContourInterval = 0.5;
+        public double SectionInterval = 20;
+        public double SectionLeft = 20;
+        public double SectionRight = 20;
+        public double SectionStep = 1;
+        public double StartChainage = 0;
+        public double VerticalExaggeration = 10;
+        public string LastOglPath = "";
+        public string LastDesignPath = "";
+
         private static Settings _current;
         public static Settings Current => _current ?? (_current = Load());
 

@@ -50,6 +50,13 @@ namespace SurveyX.Cad
                 Btn(Lang.T("RibConvert"), "SXCONVERT", "XY", Color.FromRgb(0x8E, 0x24, 0xAA), Lang.T("TipConvert")),
                 Btn(Lang.T("RibTable"), "SXTABLE", "TB", Color.FromRgb(0xFB, 0x8C, 0x00), Lang.T("TipTable")),
                 Btn(Lang.T("RibLabel"), "SXLABEL", "EN", Color.FromRgb(0x00, 0x89, 0x7B), Lang.T("TipLabel"))));
+            tab.Panels.Add(Panel(Lang.T("RibEarthworks"),
+                Btn(Lang.T("RibCutFill"), "SXCUTFILL", "C/F", Color.FromRgb(0xC6, 0x28, 0x28), Lang.T("TipCutFill")),
+                Btn(Lang.T("RibLevelCheck"), "SXLEVELCHECK", "±", Color.FromRgb(0x2E, 0x7D, 0x32), Lang.T("TipLevelCheck")),
+                Btn(Lang.T("RibSurface"), "SXSURFACE", "TIN", Color.FromRgb(0x6D, 0x4C, 0x41), Lang.T("TipSurface")),
+                Btn(Lang.T("RibSections"), "SXSECTIONS", "SEC", Color.FromRgb(0x45, 0x5A, 0x64), Lang.T("TipSections"))));
+            tab.Panels.Add(Panel(Lang.T("RibPrimavera"),
+                Btn(Lang.T("RibP6"), "SXP6", "P6", Color.FromRgb(0xD8, 0x43, 0x15), Lang.T("TipP6"))));
             tab.Panels.Add(Panel(Lang.T("RibTools"),
                 Btn(Lang.T("RibSettings"), "SXSETTINGS", "ST", Color.FromRgb(0x54, 0x6E, 0x7A), Lang.T("TipSettings")),
                 Btn(Lang.T("RibAbout"), "SXABOUT", "?", Color.FromRgb(0x37, 0x47, 0x4F), Lang.T("TipAbout"))));

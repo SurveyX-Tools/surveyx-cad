@@ -243,6 +243,25 @@ namespace SurveyX.Cad
             return prefix + n.ToString(Inv).PadLeft(digits.Length, '0');
         }
 
+        // ------------------------------------------------------------- surfaces & earthworks
+        private static void ShowForm(System.Windows.Forms.Form f) { using (f) AcApp.ShowModalDialog(f); }
+
+        [CommandMethod("SXSURFACE", CommandFlags.Modal)]
+        public void Surface() => Run("SXSURFACE", () => ShowForm(new SurfaceForm()));
+
+        [CommandMethod("SXCUTFILL", CommandFlags.Modal)]
+        public void CutFillCmd() => Run("SXCUTFILL", () => ShowForm(new CutFillForm()));
+
+        [CommandMethod("SXLEVELCHECK", CommandFlags.Modal)]
+        public void LevelCheckCmd() => Run("SXLEVELCHECK", () => ShowForm(new LevelCheckForm()));
+
+        [CommandMethod("SXSECTIONS", CommandFlags.Modal)]
+        public void SectionsCmd() => Run("SXSECTIONS", () => ShowForm(new SectionsForm()));
+
+        // ------------------------------------------------------------- Primavera
+        [CommandMethod("SXP6", CommandFlags.Modal)]
+        public void Primavera() => Run("SXP6", () => ShowForm(new PrimaveraForm()));
+
         // ------------------------------------------------------------- settings / about / update
         [CommandMethod("SXSETTINGS", CommandFlags.Modal)]
         public void SettingsCmd() => Run("SXSETTINGS", () =>

@@ -130,7 +130,7 @@ namespace SurveyX.Tests
         }
 
         [Fact]
-        public void MapsColumnsFromHeader_LandStarStyle()
+        public void MapsColumnsFromHeader_ControllerStyle()
         {
             var r = PointFileReader.Read(Temp(".csv", "Name,Code,E,N,H\nCP1,CTRL,234124.881,2705898.112,10.25\nCP2,CTRL,234130,2705900,10.3\n"));
             Assert.Equal(2, r.Points.Count);

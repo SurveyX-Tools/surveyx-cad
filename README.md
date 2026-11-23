@@ -18,7 +18,12 @@ Free surveying tools for **AutoCAD & Civil 3D 2021–2026** — by Ahmed Gamal S
 | `SXTABLE` | جدول إحداثيات |
 | `SXLABEL` | ليدر بالشرقي والشمالي والمنسوب |
 | `SXPOINT` | إضافة نقط بالضغط |
-| `SXSETTINGS` | الإعدادات (اللغة، ارتفاع الكتابة، الأرقام العشرية، الطبقات) |
+| `SXCUTFILL` | القطع والردم اليومي مقابل الـ OGL، بخريطة ألوان وتقرير PDF بلوجو الشركة |
+| `SXLEVELCHECK` | فحص المناسيب مقابل التصميم بالسماحية (مقبول / مرفوض) |
+| `SXSURFACE` | السطح، والكنتور، وخريطة المناسيب، وسطح سيفيل ثري دي، ونقط COGO |
+| `SXSECTIONS` | القطاعات الطولية والعرضية والكميات |
+| `SXP6` | ربط بريمافيرا P6 ونسبة الإنجاز من الكميات المنفذة |
+| `SXSETTINGS` | الإعدادات (اللغة، والطبقات، وبيانات التقارير واللوجو) |
 
 ## أنظمة الإحداثيات / Coordinate systems
 WGS 84 · UTM 35N–40N · DLTM (EPSG:3997) · Nahrwan 1967 / UTM 39N, 40N (UAE, Abu Dhabi 7-param) · Egypt 1907 Red / Purple / Extended Purple / Blue belts.

@@ -282,7 +282,7 @@ namespace SurveyX.Core
                 if (map.D >= 0 && map.D < r.Length) p.Desc = r[map.D];
                 else if (map.D < 0 && r.Length > map.MaxIndex + 1)
                 {
-                    // keep extra trailing text as description (e.g. LandStar code columns)
+                    // keep extra trailing text as description (e.g. code columns from field controllers)
                     var extra = r.Skip(map.MaxIndex + 1).FirstOrDefault(s => !string.IsNullOrWhiteSpace(s) && !TryNum(s, out _));
                     if (extra != null) p.Desc = extra;
                 }
