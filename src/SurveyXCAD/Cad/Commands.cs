@@ -262,6 +262,64 @@ namespace SurveyX.Cad
         [CommandMethod("SXP6", CommandFlags.Modal)]
         public void Primavera() => Run("SXP6", () => ShowForm(new PrimaveraForm()));
 
+        // ------------------------------------------------------------- AI assistant & office tools
+        [CommandMethod("SXAI", CommandFlags.Modal)]
+        public void Assistant() => Run("SXAI", AssistantPalette.Show);
+
+        [CommandMethod("SXQTO", CommandFlags.Modal | CommandFlags.UsePickSet)]
+        public void Qto() => Run("SXQTO", () =>
+        {
+            ObjectId[] ids;
+            var implied = Ed.SelectImplied();
+            if (implied.Status == PromptStatus.OK) ids = implied.Value.GetObjectIds();
+            else
+            {
+                var r = Ed.GetSelection(new PromptSelectionOptions { MessageForAdding = "\nSelect objects for quantity take-off (Enter = whole drawing): " });
+                ids = r.Status == PromptStatus.OK ? r.Value.GetObjectIds() : OfficeCad.ModelSpaceIds().ToArray();
+            }
+            var kw = new PromptKeywordOptions("\nDraw table in drawing? [Yes/No] <No>: ") { AllowNone = true };
+            kw.Keywords.Add("Yes"); kw.Keywords.Add("No");
+            var k = Ed.GetKeywords(kw);
+            var res = AssistantTools.Run("quantity_takeoff", J.Obj("selection_id", AssistantTools.RegisterSelection(ids), "draw_table", k.Status == PromptStatus.OK && k.StringResult == "Yes")).Result;
+            Report(res);
+        });
+
+        [CommandMethod("SXSETOUT", CommandFlags.Modal)]
+        public void SetOut() => Run("SXSETOUT", () =>
+        {
+            var c = Ed.GetEntity(new PromptEntityOptions("\nSelect centreline (polyline / line / alignment): "));
+            if (c.Status != PromptStatus.OK) return;
+            var p = Ed.GetSelection(new PromptSelectionOptions { MessageForAdding = "\nSelect points to set out: " }, CadPoints.AnyPointLike());
+            if (p.Status != PromptStatus.OK) return;
+            var st = Ed.GetDouble(new PromptDoubleOptions("\nStart chainage (m) <" + Settings.Current.StartChainage.ToString(Inv) + ">: ") { AllowNone = true, DefaultValue = Settings.Current.StartChainage, UseDefaultValue = true });
+            if (st.Status != PromptStatus.OK && st.Status != PromptStatus.None) return;
+            var res = AssistantTools.Run("setting_out_table", J.Obj(
+                "alignment_selection_id", AssistantTools.RegisterSelection(new[] { c.ObjectId }),
+                "points", J.Obj("selection_id", AssistantTools.RegisterSelection(p.Value.GetObjectIds())),
+                "start_chainage", st.Status == PromptStatus.OK ? st.Value : Settings.Current.StartChainage)).Result;
+            Report(res);
+        });
+
+        [CommandMethod("SXCUMULATIVE", CommandFlags.Modal)]
+        public void CumulativeCmd() => Run("SXCUMULATIVE", () =>
+        {
+            var a = Ed.GetString(new PromptStringOptions("\nArea name (Enter = all areas): ") { AllowSpaces = true });
+            if (a.Status == PromptStatus.Cancel) return;
+            var res = AssistantTools.Run("cumulative_report", J.Obj("area_name", a.StringResult ?? "")).Result;
+            Report(res);
+        });
+
+        /// <summary>Shows a tool result on the command line and offers to open the produced files.</summary>
+        private static void Report(string json)
+        {
+            var o = MiniJson.Parse(json) as System.Collections.Generic.Dictionary<string, object>;
+            if (o == null) { Ed.WriteMessage("\n" + json); return; }
+            if (o.ContainsKey("message")) { UiKit.Info(o.Str("message")); return; }
+            var files = new[] { "pdf", "excel" }.Select(k => o.Str(k)).Where(f => !string.IsNullOrEmpty(f)).ToList();
+            Ed.WriteMessage("\n[SurveyX] " + string.Join("  ", files));
+            if (files.Count > 0 && UiKit.Ask(Lang.T("ReportSavedOpen") + "\n" + string.Join("\n", files))) foreach (var f in files) UiKit.OpenUrl(f);
+        }
+
         // ------------------------------------------------------------- settings / about / update
         [CommandMethod("SXSETTINGS", CommandFlags.Modal)]
         public void SettingsCmd() => Run("SXSETTINGS", () =>

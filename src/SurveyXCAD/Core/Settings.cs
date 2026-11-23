@@ -41,6 +41,8 @@ namespace SurveyX.Core
         public double StartChainage = 0;
         public double VerticalExaggeration = 10;
         public string LastOglPath = "";
+        public string ApiKeyProtected = "";   // DPAPI-encrypted, per Windows user
+        public string AiModel = "claude-sonnet-5-5";
         public string LastDesignPath = "";
 
         private static Settings _current;

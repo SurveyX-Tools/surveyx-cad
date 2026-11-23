@@ -196,6 +196,7 @@ namespace SurveyX.UI
                 var d = ReportFactory.LevelCheck(_r, _element.Text, (string)_mode.SelectedItem);
                 ReportBuilder.SavePdf(d, path);
                 WriteCsv(Path.ChangeExtension(path, ".csv"));
+                ExcelExport.LevelCheck(Path.ChangeExtension(path, ".xlsx"), _r, _element.Text);
                 if (UiKit.Ask(Lang.T("ReportSavedOpen") + "\n" + path)) UiKit.OpenUrl(path);
             }
             catch (Exception ex) { UiKit.Error(ex.Message); }

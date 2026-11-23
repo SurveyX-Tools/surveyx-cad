@@ -42,6 +42,9 @@ namespace SurveyX.Cad
             var tab = new RibbonTab { Title = "SurveyX", Id = TabId };
             ribbon.Tabs.Add(tab);
 
+            tab.Panels.Add(Panel(Lang.T("RibAi"),
+                Btn(Lang.T("RibAssistant"), "SXAI", "AI", Color.FromRgb(0x7B, 0x1F, 0xA2), Lang.T("TipAi"))));
+
             tab.Panels.Add(Panel(Lang.T("RibPoints"),
                 Btn(Lang.T("RibImport"), "SXIMPORT", "IN", Color.FromRgb(0x1E, 0x88, 0xE5), Lang.T("TipImport")),
                 Btn(Lang.T("RibExport"), "SXEXPORT", "OUT", Color.FromRgb(0x43, 0xA0, 0x47), Lang.T("TipExport")),
@@ -55,6 +58,10 @@ namespace SurveyX.Cad
                 Btn(Lang.T("RibLevelCheck"), "SXLEVELCHECK", "±", Color.FromRgb(0x2E, 0x7D, 0x32), Lang.T("TipLevelCheck")),
                 Btn(Lang.T("RibSurface"), "SXSURFACE", "TIN", Color.FromRgb(0x6D, 0x4C, 0x41), Lang.T("TipSurface")),
                 Btn(Lang.T("RibSections"), "SXSECTIONS", "SEC", Color.FromRgb(0x45, 0x5A, 0x64), Lang.T("TipSections"))));
+            tab.Panels.Add(Panel(Lang.T("RibOffice"),
+                Btn(Lang.T("RibQto"), "SXQTO", "QTO", Color.FromRgb(0x00, 0x69, 0x5C), Lang.T("TipQto")),
+                Btn(Lang.T("RibSetOut"), "SXSETOUT", "CH", Color.FromRgb(0x28, 0x35, 0x93), Lang.T("TipSetOut")),
+                Btn(Lang.T("RibCumulative"), "SXCUMULATIVE", "Σ", Color.FromRgb(0xAD, 0x14, 0x57), Lang.T("TipCumulative"))));
             tab.Panels.Add(Panel(Lang.T("RibPrimavera"),
                 Btn(Lang.T("RibP6"), "SXP6", "P6", Color.FromRgb(0xD8, 0x43, 0x15), Lang.T("TipP6"))));
             tab.Panels.Add(Panel(Lang.T("RibTools"),

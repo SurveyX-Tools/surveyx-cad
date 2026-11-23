@@ -16,12 +16,15 @@ namespace SurveyX.UI
         private readonly CheckBox _chkUpd = new CheckBox { AutoSize = true };
         private readonly TextBox _company = new TextBox { Width = 320 }, _project = new TextBox { Width = 320 },
             _prepared = new TextBox { Width = 320 }, _submitted = new TextBox { Width = 320 }, _logo = new TextBox { Width = 250, ReadOnly = true };
+        private readonly TextBox _key = new TextBox { Width = 320, UseSystemPasswordChar = true };
+        private readonly ComboBox _model = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 320 };
+        private static readonly string[] Models = { "claude-sonnet-5-5", "claude-haiku-5-5", "claude-opus-5-5" };
         private readonly PictureBox _logoPreview = new PictureBox { Width = 120, Height = 60, SizeMode = PictureBoxSizeMode.Zoom, BorderStyle = BorderStyle.FixedSingle };
 
         public SettingsForm() : base("SettingsTitle", "HelpSettings")
         {
             var st = Settings.Current;
-            Size = new Size(640, 700);
+            Size = new Size(700, 760);
             MinimumSize = new Size(600, 640);
 
             _cboLang.Items.Add("العربية");
@@ -66,6 +69,36 @@ namespace SurveyX.UI
             Row("PreparedBy", _prepared);
             Row("SubmittedTo", _submitted);
 
+            Section("SecAi");
+            _key.Text = Secret.Unprotect(st.ApiKeyProtected);
+            var keyRow = new FlowLayoutPanel { AutoSize = true, WrapContents = false };
+            var bTest = UiKit.Btn("AiTestKey");
+            var bGet = new LinkLabel { Text = Lang.T("AiGetKey"), AutoSize = true, Margin = new Padding(6, 9, 3, 3) };
+            bGet.LinkClicked += (s2, e2) => UiKit.OpenUrl("https://platform.claude.com/");
+            bTest.Click += async (s2, e2) =>
+            {
+                bTest.Enabled = false;
+                try
+                {
+                    var body = JsonWriter.Write(new System.Collections.Generic.Dictionary<string, object>
+                    {
+                        { "model", Models[Math.Max(0, _model.SelectedIndex)] }, { "max_tokens", 8 },
+                        { "messages", new System.Collections.Generic.List<object> { new System.Collections.Generic.Dictionary<string, object> { { "role", "user" }, { "content", "Hi" } } } },
+                    });
+                    await new HttpClaudeTransport().SendAsync(_key.Text.Trim(), body, System.Threading.CancellationToken.None);
+                    UiKit.Info(Lang.T("AiKeyOk"));
+                }
+                catch (Exception ex) { UiKit.Error(Lang.T("AiKeyBad") + "\n" + ex.Message); }
+                finally { bTest.Enabled = true; }
+            };
+            keyRow.Controls.AddRange(new Control[] { _key, bTest, bGet });
+            Row("AiKey", keyRow);
+            _model.Items.Add(Lang.T("AiModelSonnet")); _model.Items.Add(Lang.T("AiModelHaiku")); _model.Items.Add(Lang.T("AiModelOpus"));
+            _model.SelectedIndex = Math.Max(0, Array.IndexOf(Models, st.AiModel));
+            Row("AiModel", _model);
+            var note = new Label { Text = Lang.T("AiKeyNote"), AutoSize = true, MaximumSize = new Size(480, 0), ForeColor = Color.DimGray, Margin = new Padding(3, 4, 3, 8) };
+            t.Controls.Add(note, 1, r++);
+
             UiKit.EndRows(t);
             var ok = UiKit.Btn("Save", true);
             var cancel = UiKit.Btn("Cancel");
@@ -87,6 +120,8 @@ namespace SurveyX.UI
                 st.PreparedBy = _prepared.Text.Trim();
                 st.SubmittedTo = _submitted.Text.Trim();
                 st.LogoPath = _logo.Text;
+                st.ApiKeyProtected = string.IsNullOrWhiteSpace(_key.Text) ? "" : Secret.Protect(_key.Text.Trim());
+                st.AiModel = Models[Math.Max(0, _model.SelectedIndex)];
                 st.Save();
                 Lang.Set(st.Language);
                 DialogResult = DialogResult.OK;

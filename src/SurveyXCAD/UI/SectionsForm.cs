@@ -163,31 +163,17 @@ namespace SurveyX.UI
                 var secs = Secs(surfs);
                 var v = Sections.EndArea(secs);
                 double st0 = (double)_start.Value;
-                var st = Settings.Current;
-                var d = new ReportDoc { Title = Lang.T("SectionVolTitle") };
-                d.Info.Add((Lang.T("Project"), st.ProjectName));
-                d.Info.Add((Lang.T("Date"), DateTime.Today.ToString("yyyy-MM-dd", Inv)));
-                d.Info.Add((Lang.T("Chainage"), Geo2D.FormatChainage(0, st0) + " → " + Geo2D.FormatChainage(Geo2D.Length(_align), st0)));
-                d.Info.Add((Lang.T("Interval"), _interval.Value.ToString(Inv) + " m"));
-                d.Info.Add((Lang.T("Width"), "L " + _left.Value.ToString(Inv) + " / R " + _right.Value.ToString(Inv) + " m"));
-                d.Cards.Add((Lang.T("CutVolume"), v.TotalCut.ToString("N2") + " m³", Color.FromArgb(229, 57, 53)));
-                d.Cards.Add((Lang.T("FillVolume"), v.TotalFill.ToString("N2") + " m³", Color.FromArgb(30, 136, 229)));
-                d.Cards.Add((Lang.T("Net"), (v.TotalFill - v.TotalCut).ToString("N2") + " m³", Color.FromArgb(96, 125, 139)));
-                d.Cards.Add((Lang.T("Sections"), secs.Count.ToString(Inv), Color.FromArgb(67, 160, 71)));
-                d.TableTitle = Lang.T("EndAreaTable");
-                d.Headers = new[] { Lang.T("Chainage"), Lang.T("CutArea"), Lang.T("FillArea"), Lang.T("CutVolume"), Lang.T("FillVolume"), Lang.T("CumCut"), Lang.T("CumFill") };
+                var d = ReportFactory.SectionVolumes(v, _align, st0, (double)_interval.Value, (double)_left.Value, (double)_right.Value, secs.Count);
                 double cc = 0, cf = 0;
                 var csv = new StringBuilder("Chainage,Cut area (m2),Fill area (m2),Cut volume (m3),Fill volume (m3),Cumulative cut (m3),Cumulative fill (m3)\n");
                 foreach (var r in v.Rows)
                 {
                     cc += r.cutVol; cf += r.fillVol;
-                    var row = new[] { Geo2D.FormatChainage(r.ch, st0), r.cutArea.ToString("F2", Inv), r.fillArea.ToString("F2", Inv), r.cutVol.ToString("F2", Inv), r.fillVol.ToString("F2", Inv), cc.ToString("F2", Inv), cf.ToString("F2", Inv) };
-                    d.Rows.Add(row);
-                    csv.AppendLine(string.Join(",", row));
+                    csv.AppendLine(string.Join(",", Geo2D.FormatChainage(r.ch, st0), r.cutArea.ToString("F2", Inv), r.fillArea.ToString("F2", Inv), r.cutVol.ToString("F2", Inv), r.fillVol.ToString("F2", Inv), cc.ToString("F2", Inv), cf.ToString("F2", Inv)));
                 }
-                d.Notes.Add(Lang.T("NoteEndArea"));
                 ReportBuilder.SavePdf(d, path);
                 File.WriteAllText(Path.ChangeExtension(path, ".csv"), csv.ToString(), new UTF8Encoding(true));
+                ExcelExport.SectionVolumes(Path.ChangeExtension(path, ".xlsx"), v, st0);
                 _info.Text = Lang.T("Cut") + " " + v.TotalCut.ToString("N2") + " m³   ·   " + Lang.T("Fill") + " " + v.TotalFill.ToString("N2") + " m³";
                 if (UiKit.Ask(Lang.T("ReportSavedOpen") + "\n" + path)) UiKit.OpenUrl(path);
             }

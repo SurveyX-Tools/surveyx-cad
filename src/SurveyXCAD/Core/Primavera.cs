@@ -380,7 +380,7 @@ namespace SurveyX.Core
                     {
                         string refc = Col(c) + (r + 1);
                         string v = rows[r][c] ?? "";
-                        bool num = r >= numericFromRow && numericColumns != null && Array.IndexOf(numericColumns, c) >= 0 &&
+                        bool num = r >= numericFromRow && (numericColumns == null || Array.IndexOf(numericColumns, c) >= 0) &&
                                    double.TryParse(v, NumberStyles.Float, CultureInfo.InvariantCulture, out _);
                         if (num) sb.Append("<c r=\"").Append(refc).Append("\"><v>").Append(v).Append("</v></c>");
                         else sb.Append("<c r=\"").Append(refc).Append("\" t=\"inlineStr\"><is><t>").Append(SecurityElement.Escape(v)).Append("</t></is></c>");

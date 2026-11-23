@@ -101,6 +101,11 @@ namespace SurveyX.UI
                 st.GridCell = (double)_cell.Value; st.MaxEdge = maxEdge;
                 if (_ogl.FilePath != null) st.LastOglPath = _ogl.FilePath;
                 st.Save();
+                CutFillLog.Add(new CutFillLog.Entry
+                {
+                    Date = _date.Value.Date, Area = _area.Text.Trim(), Cut = _r.CutVolume, Fill = _r.FillVolume, AreaM2 = _r.TotalArea, Cell = _r.Cell,
+                    Ogl = _ogl.FilePath != null ? Path.GetFileName(_ogl.FilePath) : "drawing", Survey = _new.FilePath != null ? Path.GetFileName(_new.FilePath) : "drawing",
+                });
                 var sb = new StringBuilder();
                 sb.AppendLine(Lang.T("Cut") + ":   " + _r.CutVolume.ToString("N2") + " m³      (" + _r.CutArea.ToString("N1") + " m²)");
                 sb.AppendLine(Lang.T("Fill") + ":   " + _r.FillVolume.ToString("N2") + " m³      (" + _r.FillArea.ToString("N1") + " m²)");
@@ -181,6 +186,8 @@ namespace SurveyX.UI
                     _new.FilePath != null ? Path.GetFileName(_new.FilePath) : Lang.T("Drawing"), _new.Points.Count);
                 ReportBuilder.SavePdf(d, path);
                 WriteCsv(Path.ChangeExtension(path, ".csv"));
+                ExcelExport.CutFill(Path.ChangeExtension(path, ".xlsx"), _r, _area.Text, _date.Value,
+                    _ogl.FilePath != null ? Path.GetFileName(_ogl.FilePath) : Lang.T("Drawing"), _new.FilePath != null ? Path.GetFileName(_new.FilePath) : Lang.T("Drawing"));
                 if (UiKit.Ask(Lang.T("ReportSavedOpen") + "\n" + path)) UiKit.OpenUrl(path);
             }
             catch (Exception ex) { UiKit.Error(ex.Message); }

@@ -127,5 +127,55 @@ namespace SurveyX.UI
             d.Notes.Add(Lang.T("NoteP6"));
             return d;
         }
+        public static ReportDoc Cumulative(IList<CutFillLog.Entry> e, string area)
+        {
+            var st = Settings.Current;
+            var d = new ReportDoc { Title = Lang.T("CumTitle") + (string.IsNullOrWhiteSpace(area) ? "" : " — " + area) };
+            d.Info.Add((Lang.T("Project"), st.ProjectName));
+            d.Info.Add((Lang.T("Date"), DateTime.Today.ToString("yyyy-MM-dd", Inv)));
+            d.Info.Add((Lang.T("Period"), e.First().Date.ToString("yyyy-MM-dd", Inv) + " → " + e.Last().Date.ToString("yyyy-MM-dd", Inv)));
+            d.Info.Add((Lang.T("Days"), e.Count.ToString(Inv)));
+            double tc = e.Sum(x => x.Cut), tf = e.Sum(x => x.Fill);
+            d.Cards.Add((Lang.T("CumCut"), tc.ToString("N2") + " m³", Color.FromArgb(229, 57, 53)));
+            d.Cards.Add((Lang.T("CumFill"), tf.ToString("N2") + " m³", Color.FromArgb(30, 136, 229)));
+            d.Cards.Add((Lang.T("Net"), (tf - tc).ToString("N2") + " m³", Color.FromArgb(96, 125, 139)));
+            d.Cards.Add((Lang.T("Days"), e.Count.ToString(Inv), Color.FromArgb(67, 160, 71)));
+            d.TableTitle = Lang.T("CumTable");
+            d.Headers = new[] { Lang.T("Date"), Lang.T("AreaShort"), Lang.T("Cut"), Lang.T("Fill"), Lang.T("CumCut"), Lang.T("CumFill") };
+            d.ColWeights = new[] { 1.2f, 1.4f, 1f, 1f, 1.2f, 1.2f };
+            double cc = 0, cf = 0;
+            foreach (var x in e)
+            {
+                cc += x.Cut; cf += x.Fill;
+                d.Rows.Add(new[] { x.Date.ToString("yyyy-MM-dd", Inv), x.Area, x.Cut.ToString("N2"), x.Fill.ToString("N2"), cc.ToString("N2"), cf.ToString("N2") });
+            }
+            d.Notes.Add(Lang.T("NoteCum"));
+            return d;
+        }
+
+        public static ReportDoc SectionVolumes(SectionVolumes v, IList<(double x, double y)> align, double st0, double interval, double left, double right, int sections)
+        {
+            var st = Settings.Current;
+            var d = new ReportDoc { Title = Lang.T("SectionVolTitle") };
+            d.Info.Add((Lang.T("Project"), st.ProjectName));
+            d.Info.Add((Lang.T("Date"), DateTime.Today.ToString("yyyy-MM-dd", Inv)));
+            d.Info.Add((Lang.T("Chainage"), Geo2D.FormatChainage(0, st0) + " → " + Geo2D.FormatChainage(Geo2D.Length(align), st0)));
+            d.Info.Add((Lang.T("Interval"), interval.ToString(Inv) + " m"));
+            d.Info.Add((Lang.T("Width"), "L " + left.ToString(Inv) + " / R " + right.ToString(Inv) + " m"));
+            d.Cards.Add((Lang.T("CutVolume"), v.TotalCut.ToString("N2") + " m³", Color.FromArgb(229, 57, 53)));
+            d.Cards.Add((Lang.T("FillVolume"), v.TotalFill.ToString("N2") + " m³", Color.FromArgb(30, 136, 229)));
+            d.Cards.Add((Lang.T("Net"), (v.TotalFill - v.TotalCut).ToString("N2") + " m³", Color.FromArgb(96, 125, 139)));
+            d.Cards.Add((Lang.T("Sections"), sections.ToString(Inv), Color.FromArgb(67, 160, 71)));
+            d.TableTitle = Lang.T("EndAreaTable");
+            d.Headers = new[] { Lang.T("Chainage"), Lang.T("CutArea"), Lang.T("FillArea"), Lang.T("CutVolume"), Lang.T("FillVolume"), Lang.T("CumCut"), Lang.T("CumFill") };
+            double cc = 0, cf = 0;
+            foreach (var r in v.Rows)
+            {
+                cc += r.cutVol; cf += r.fillVol;
+                d.Rows.Add(new[] { Geo2D.FormatChainage(r.ch, st0), r.cutArea.ToString("F2", Inv), r.fillArea.ToString("F2", Inv), r.cutVol.ToString("F2", Inv), r.fillVol.ToString("F2", Inv), cc.ToString("F2", Inv), cf.ToString("F2", Inv) });
+            }
+            d.Notes.Add(Lang.T("NoteEndArea"));
+            return d;
+        }
     }
 }

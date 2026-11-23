@@ -11,6 +11,9 @@ using System.Text;
 using System.Windows.Forms;
 using SurveyX.Core;
 using SurveyX.UI;
+using SurveyX.Cad;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace SurveyX.Preview
 {
@@ -95,9 +98,42 @@ namespace SurveyX.Preview
             foreach (var a in sched.Activities) a.UpdateDrawingPercent(0, false);
             Line("P6: " + string.Join(", ", sched.Activities.Select(a => a.Id + " " + a.EffectivePercent.ToString("0.0", Inv) + "% " + a.State(sched.DataDate))));
 
+            // assistant tool definitions must be valid JSON schemas
+            Step("assistant_specs", () =>
+            {
+                var specs = AssistantSpecs.Specs();
+                var json = JsonWriter.Write(specs.Select(x => (object)x.ToJson()).ToList());
+                var back = MiniJson.Parse(json) as List<object>;
+                if (back == null || back.Count != specs.Count) throw new Exception("spec JSON invalid");
+                if (specs.Select(x => x.Name).Distinct().Count() != specs.Count) throw new Exception("duplicate tool names");
+                Line($"     {specs.Count} tools, {json.Length / 1024} KB of definitions; system prompt {AssistantSpecs.SystemPrompt().Length} chars");
+            });
+            st.ApiKeyProtected = Secret.Protect("sk-preview-test");
+            if (Secret.Unprotect(st.ApiKeyProtected) != "sk-preview-test") { _errors++; Line("FAIL key encryption round trip"); }
+
+            // cumulative log & excel exports
+            CutFillLog.PathOverride = Path.Combine(_out, "cutfill_history_sample.csv");
+            if (File.Exists(CutFillLog.PathOverride)) File.Delete(CutFillLog.PathOverride);
+            var rnd2 = new Random(3);
+            for (int dd = 0; dd < 12; dd++)
+                CutFillLog.Add(new CutFillLog.Entry { Date = new DateTime(2026, 11, 10).AddDays(dd), Area = "Zone A", Cut = 250 + rnd2.Next(200), Fill = 380 + rnd2.Next(250), AreaM2 = 5200, Cell = 0.25, Survey = "Survey_" + dd + ".csv" });
+            Step("excel_exports", () =>
+            {
+                ExcelExport.CutFill(Path.Combine(_out, "sample_cutfill.xlsx"), cf, "Zone A", new DateTime(2026, 11, 23), "OGL_RAWDA.csv", "Survey.csv");
+                ExcelExport.LevelCheck(Path.Combine(_out, "sample_levelcheck.xlsx"), lc, "Kerb top");
+                ExcelExport.Cumulative(Path.Combine(_out, "sample_cumulative.xlsx"), CutFillLog.Filter("Zone A", null, null), "Zone A");
+                foreach (var f in Directory.GetFiles(_out, "sample_*.xlsx"))
+                {
+                    var rows = XlsxReader.ReadFirstSheet(f);
+                    Line($"     {Path.GetFileName(f)}: {rows.Count} rows readable");
+                }
+            });
+
             foreach (var lang in new[] { "ar", "en" })
             {
                 Lang.Set(lang);
+                Step($"report_cumulative_{lang}", () => Report(ReportFactory.Cumulative(CutFillLog.Filter("Zone A", null, null), "Zone A"), $"report_cumulative_{lang}"));
+                Step($"assistant_chat_{lang}", () => Chat(lang, cf));
                 Step($"report_cutfill_{lang}", () => Report(ReportFactory.CutFill(cf, null, lang == "ar" ? "المنطقة A" : "Zone A", new DateTime(2026, 11, 23), "OGL_RAWDA.csv", "Survey_2026-11-23.csv", survey.Count), $"report_cutfill_{lang}"));
                 Step($"report_level_{lang}", () => Report(ReportFactory.LevelCheck(lc, Lang.T("PresetKerb"), Lang.T("ModeSurface")), $"report_level_{lang}"));
                 Step($"report_p6_{lang}", () => Report(ReportFactory.Progress(sched), $"report_p6_{lang}"));
@@ -117,6 +153,38 @@ namespace SurveyX.Preview
             File.WriteAllText(Path.Combine(_out, "summary.txt"), Log.ToString(), new UTF8Encoding(true));
             Console.WriteLine(Log.ToString());
             return _errors == 0 ? 0 : 1;
+        }
+
+        /// <summary>Scripted Claude replies (no network): the assistant calls cut_fill, gets real numbers, then answers.</summary>
+        private sealed class ScriptTransport : IClaudeTransport
+        {
+            public readonly Queue<string> Responses = new Queue<string>();
+            public Task<string> SendAsync(string apiKey, string jsonBody, CancellationToken ct) => Task.FromResult(Responses.Dequeue());
+        }
+
+        private static void Chat(string lang, CutFillResult cf)
+        {
+            var t = new ScriptTransport();
+            string intro = lang == "ar" ? "حاضر، هحسب القطع والردم لرفع النهارده قصاد الـ OGL المحفوظ للمنطقة A." : "Sure — calculating today's cut & fill against the saved OGL for Zone A.";
+            t.Responses.Enqueue(JsonWriter.Write(J.Obj("stop_reason", "tool_use", "usage", J.Obj("input_tokens", 5400, "output_tokens", 160),
+                "content", J.Arr(J.Obj("type", "text", "text", intro),
+                    J.Obj("type", "tool_use", "id", "toolu_1", "name", "cut_fill", "input", J.Obj("ogl", J.Obj("saved_ogl", true), "survey", J.Obj("file", "Survey_2026-11-23.csv"), "area_name", "Zone A"))))));
+            string answer = lang == "ar"
+                ? $"تم ✅ المنطقة A — 2026-11-23:\n• الحفر: {cf.CutVolume:N2} م³\n• الردم: {cf.FillVolume:N2} م³\n• الصافي: {cf.NetVolume:N2} م³ ردم\n• المساحة: {cf.TotalArea:N1} م²\nالتقرير PDF و Excel اتحفظوا في Documents\\SurveyX\\Reports."
+                : $"Done ✅ Zone A — 2026-11-23:\n• Cut: {cf.CutVolume:N2} m³\n• Fill: {cf.FillVolume:N2} m³\n• Net: {cf.NetVolume:N2} m³ fill\n• Area: {cf.TotalArea:N1} m²\nPDF and Excel saved in Documents\\SurveyX\\Reports.";
+            t.Responses.Enqueue(JsonWriter.Write(J.Obj("stop_reason", "end_turn", "usage", J.Obj("input_tokens", 6100, "output_tokens", 190),
+                "content", J.Arr(J.Obj("type", "text", "text", answer)))));
+            string toolResult = JsonWriter.Write(J.Obj("cut_m3", Math.Round(cf.CutVolume, 2), "fill_m3", Math.Round(cf.FillVolume, 2)));
+            var chat = new ChatControl(AssistantSpecs.Specs, (n, i) => Task.FromResult(toolResult), AssistantSpecs.SystemPrompt, null, t) { Dock = DockStyle.Fill };
+            var f = new Form { Text = "SurveyX Assistant", Size = new Size(440, 720), RightToLeft = lang == "ar" ? RightToLeft.Yes : RightToLeft.No };
+            f.Controls.Add(chat);
+            f.StartPosition = FormStartPosition.Manual; f.Location = new Point(0, 0); f.Show();
+            var task = chat.SendText(lang == "ar" ? "احسبلي قطع وردم رفع النهارده للمنطقة A قصاد الـ OGL وطلّع التقرير" : "Cut & fill of today's survey for Zone A against the OGL, with the report");
+            var sw = Stopwatch.StartNew();
+            while (!task.IsCompleted && sw.ElapsedMilliseconds < 10000) { Application.DoEvents(); Thread.Sleep(20); }
+            if (!task.IsCompleted) throw new Exception("chat did not finish");
+            if (t.Responses.Count != 0) throw new Exception("not all scripted replies were used");
+            Shot(f, $"assistant_chat_{lang}");
         }
 
         private static string Pct(double a, double b) => b == 0 ? "n/a" : ((a - b) / b * 100).ToString("+0.00;-0.00", Inv) + "%";
