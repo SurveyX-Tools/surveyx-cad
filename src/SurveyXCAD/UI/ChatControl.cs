@@ -26,29 +26,33 @@ namespace SurveyX.UI
         private readonly Func<string, Dictionary<string, object>, Task<string>> _runTool;
         private readonly Func<string> _system;
         private readonly Action _openSettings;
+        private readonly Action<string> _runCommand;
         private AssistantSession _session;
         private CancellationTokenSource _cts;
 
         public ChatControl(Func<List<ToolSpec>> tools, Func<string, Dictionary<string, object>, Task<string>> runTool, Func<string> system,
-            Action openSettings, IClaudeTransport transport = null)
+            Action openSettings, IClaudeTransport transport = null, Action<string> runCommand = null)
         {
-            _tools = tools; _runTool = runTool; _system = system; _openSettings = openSettings;
+            _tools = tools; _runTool = runTool; _system = system; _openSettings = openSettings; _runCommand = runCommand;
             Font = new Font("Segoe UI", 9.75f);
             BackColor = Color.White;
             if (Lang.IsArabic) { RightToLeft = RightToLeft.Yes; _log.RightToLeft = RightToLeft.Yes; _input.RightToLeft = RightToLeft.Yes; }
 
             _session = new AssistantSession(transport ?? new HttpClaudeTransport(), () => Secret.Unprotect(Settings.Current.ApiKeyProtected));
 
-            var header = new Panel { Dock = DockStyle.Top, Height = 40, BackColor = SxForm.Accent };
-            var title = new Label { Text = "✦ " + Lang.T("AiTitle"), ForeColor = Color.White, Font = new Font("Segoe UI", 11f, FontStyle.Bold), Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft, Padding = new Padding(8, 0, 0, 0) };
+            var header = new Panel { Dock = DockStyle.Top, Height = 48, BackColor = SxForm.Accent };
+            var logo = new PictureBox { Image = Brand.LogoSized(36), Size = new Size(36, 36), Dock = DockStyle.Left, SizeMode = PictureBoxSizeMode.CenterImage, Width = 44 };
+            var title = new Label { Text = Lang.T("AiTitle"), ForeColor = Color.White, Font = new Font("Segoe UI", 11f, FontStyle.Bold), Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft, Padding = new Padding(8, 0, 0, 0) };
             _new = HeaderBtn(Lang.T("AiNew"));
             _settings = HeaderBtn("⚙");
             _new.Click += (s, e) => NewChat();
             _settings.Click += (s, e) => { _openSettings?.Invoke(); UpdateStatus(); };
-            var hb = new FlowLayoutPanel { Dock = DockStyle.Right, AutoSize = true, FlowDirection = FlowDirection.LeftToRight, BackColor = SxForm.Accent, Padding = new Padding(0, 5, 4, 0) };
+            var hb = new FlowLayoutPanel { Dock = DockStyle.Right, AutoSize = true, FlowDirection = FlowDirection.LeftToRight, BackColor = SxForm.Accent, Padding = new Padding(0, 9, 4, 0) };
             hb.Controls.Add(_new); hb.Controls.Add(_settings);
             header.Controls.Add(title);
+            header.Controls.Add(logo);
             header.Controls.Add(hb);
+            header.Controls.Add(new Panel { Dock = DockStyle.Bottom, Height = 3, BackColor = Brand.Teal });
 
             foreach (var k in new[] { "AiChip1", "AiChip2", "AiChip3", "AiChip4", "AiChip5" })
             {
@@ -58,7 +62,7 @@ namespace SurveyX.UI
                 _chips.Controls.Add(b);
             }
 
-            _send = new Button { Text = Lang.T("AiSend"), Dock = DockStyle.Fill, BackColor = SxForm.Accent, ForeColor = Color.White, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
+            _send = new Button { Text = Lang.T("AiSend"), Dock = DockStyle.Fill, BackColor = Brand.Teal, ForeColor = Brand.Navy, Font = new Font("Segoe UI", 10f, FontStyle.Bold), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
             _stop = new Button { Text = Lang.T("AiStop"), Dock = DockStyle.Fill, FlatStyle = FlatStyle.Flat, Visible = false };
             _send.Click += async (s, e) => await Send();
             _stop.Click += (s, e) => _cts?.Cancel();
@@ -88,7 +92,7 @@ namespace SurveyX.UI
         private static Button HeaderBtn(string text)
         {
             var b = new Button { Text = text, AutoSize = true, Height = 28, FlatStyle = FlatStyle.Flat, ForeColor = Color.White, BackColor = SxForm.Accent, Cursor = Cursors.Hand, Margin = new Padding(2), UseMnemonic = false };
-            b.FlatAppearance.BorderColor = Color.White;
+            b.FlatAppearance.BorderColor = Brand.Teal;
             return b;
         }
 
@@ -114,7 +118,7 @@ namespace SurveyX.UI
             _log.ScrollToCaret();
         }
 
-        public void AppendUser(string text) => Append("● " + Lang.T("AiYou") + ": " + text, SxForm.Accent, true);
+        public void AppendUser(string text) => Append("● " + Lang.T("AiYou") + ": " + text, Brand.NavyLight, true);
         public void AppendAssistant(string text) => Append(text, Color.FromArgb(25, 25, 25), false);
         public void AppendTool(string name) => Append("⚙ " + ToolLabel(name) + "…", Color.Gray, false, 9f);
 
@@ -129,7 +133,7 @@ namespace SurveyX.UI
         {
             string model = Settings.Current.AiModel;
             var u = _session.Usage;
-            _status.Text = model + "   ·   " + string.Format(Lang.T("AiUsage"), u.InputTokens + u.OutputTokens, u.CostUsd(model).ToString("0.000"));
+            _status.Text = model + "   ·   " + string.Format(Lang.T("AiUsage"), u.TotalTokens, u.CostUsd(model).ToString("0.000"));
         }
 
         private Task Send() => SendText(_input.Text);
@@ -139,6 +143,17 @@ namespace SurveyX.UI
         {
             string text = (message ?? "").Trim();
             if (text.Length == 0 || _cts != null) return;
+            // 1) free path: short known requests open the tool directly (no AI, no cost, no key needed)
+            var intent = _runCommand != null ? LocalIntents.Match(text) : null;
+            if (intent != null)
+            {
+                _input.Clear();
+                _chips.Visible = false;
+                AppendUser(text);
+                Append("⚡ " + string.Format(Lang.T("AiLocal"), Lang.T(intent.LabelKey)), Color.FromArgb(0x2E, 0x7D, 0x32), false);
+                _runCommand(intent.Command);
+                return;
+            }
             if (string.IsNullOrEmpty(Secret.Unprotect(Settings.Current.ApiKeyProtected)))
             {
                 Append(Lang.T("AiNoKey"), Color.FromArgb(0xC6, 0x28, 0x28), true);

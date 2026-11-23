@@ -57,13 +57,23 @@ namespace SurveyX.Tests
             // second request must carry the assistant tool_use and our tool_result
             var req2 = MiniJson.Parse(t.Requests[1]) as Dictionary<string, object>;
             Assert.Equal("claude-sonnet-5-5", req2.Str("model"));
-            Assert.Equal("sys", req2.Str("system"));
+            var sys = req2.List("system")[0] as Dictionary<string, object>;
+            Assert.Equal("sys", sys.Str("text"));
+            Assert.Equal("1h", sys.Sub("cache_control").Str("ttl"));                       // tools + system cached for an hour
             var msgs = req2.List("messages");
             Assert.Equal(3, msgs.Count);
             var toolResult = ((msgs[2] as Dictionary<string, object>).List("content")[0]) as Dictionary<string, object>;
             Assert.Equal("tool_result", toolResult.Str("type"));
             Assert.Equal("toolu_01", toolResult.Str("tool_use_id"));
             Assert.Contains("3664.93", toolResult.Str("content"));
+            Assert.Equal("ephemeral", toolResult.Sub("cache_control").Str("type"));        // newest block is the 5-minute breakpoint
+            // the stored history must stay clean (breakpoints only in the outgoing copy)
+            var stored = ((s.Messages[2] as Dictionary<string, object>).List("content")[0]) as Dictionary<string, object>;
+            Assert.False(stored.ContainsKey("cache_control"));
+            var first = MiniJson.Parse(t.Requests[0]) as Dictionary<string, object>;
+            var firstUser = (first.List("messages")[0] as Dictionary<string, object>).List("content")[0] as Dictionary<string, object>;
+            Assert.Equal("احسب قطع وردم", firstUser.Str("text"));
+            Assert.NotNull(firstUser.Sub("cache_control"));
             var tools = req2.List("tools");
             Assert.Equal("cut_fill", (tools[0] as Dictionary<string, object>).Str("name"));
             Assert.False(req2.ContainsKey("temperature")); // removed in API version 2026-10-21
@@ -111,6 +121,69 @@ namespace SurveyX.Tests
             Assert.Equal("sk-ant-test-123", Secret.Unprotect(enc));
             Assert.Equal("", Secret.Unprotect("not-base64!"));
         }
+    }
+
+    public class CostTests
+    {
+        [Fact]
+        public void CacheUsageIsCountedAndPricedLower()
+        {
+            var u = new Usage();
+            u.Add(J.Obj("input_tokens", 200.0, "output_tokens", 500.0, "cache_read_input_tokens", 9000.0,
+                "cache_creation", J.Obj("ephemeral_5m_input_tokens", 1000.0, "ephemeral_1h_input_tokens", 0.0)));
+            Assert.Equal(10700, u.TotalTokens);
+            // Sonnet 5.5: 200*2 + 500*10 + 1000*2*1.25 + 9000*2*0.05 = 400 + 5000 + 2500 + 900 = 8800 per million
+            Assert.Equal(0.0088, u.CostUsd("claude-sonnet-5-5"), 9);
+            var noCache = new Usage { InputTokens = 10200, OutputTokens = 500 };
+            Assert.True(u.CostUsd("claude-sonnet-5-5") < noCache.CostUsd("claude-sonnet-5-5"));
+        }
+
+        [Fact]
+        public async Task LongToolResultsAreShortened()
+        {
+            var t = new FakeTransport();
+            t.Responses.Enqueue("{\"stop_reason\":\"tool_use\",\"content\":[{\"type\":\"tool_use\",\"id\":\"t1\",\"name\":\"x\",\"input\":{}}]}");
+            t.Responses.Enqueue("{\"stop_reason\":\"end_turn\",\"content\":[{\"type\":\"text\",\"text\":\"ok\"}]}");
+            var s = new AssistantSession(t, () => "k") { MaxToolResultChars = 100 };
+            await s.RunAsync("q", (n, i) => Task.FromResult(new string('a', 5000)), _ => { }, null, CancellationToken.None);
+            var req2 = MiniJson.Parse(t.Requests[1]) as Dictionary<string, object>;
+            var tr = ((req2.List("messages")[2] as Dictionary<string, object>).List("content")[0]) as Dictionary<string, object>;
+            Assert.True(tr.Str("content").Length < 200);
+        }
+    }
+
+    public class LocalIntentTests
+    {
+        [Theory]
+        [InlineData("قطع وردم", "SXCUTFILL")]
+        [InlineData("عايز القطع والردم", "SXCUTFILL")]
+        [InlineData("حصر كميات", "SXQTO")]
+        [InlineData("حصر الكميات", "SXQTO")]
+        [InlineData("بريمافيرا", "SXP6")]
+        [InlineData("افتح البريمافيرا", "SXP6")]
+        [InlineData("P6", "SXP6")]
+        [InlineData("قطع وردم تراكمي", "SXCUMULATIVE")]
+        [InlineData("فحص المناسيب", "SXLEVELCHECK")]
+        [InlineData("فحص مناسيب", "SXLEVELCHECK")]
+        [InlineData("جدول التوقيع", "SXSETOUT")]
+        [InlineData("تحويل الإحداثيات", "SXCONVERT")]
+        [InlineData("جدول إحداثيات", "SXTABLE")]
+        [InlineData("القطاعات", "SXSECTIONS")]
+        [InlineData("كنتور", "SXSURFACE")]
+        [InlineData("استيراد نقط", "SXIMPORT")]
+        [InlineData("cut fill", "SXCUTFILL")]
+        [InlineData("quantity take off", "SXQTO")]
+        [InlineData("الإعدادات", "SXSETTINGS")]
+        public void ShortRequestsRunLocally(string text, string cmd) => Assert.Equal(cmd, LocalIntents.Match(text)?.Command);
+
+        [Theory]
+        [InlineData("احسب قطع وردم رفع النهارده للمنطقة A قصاد الـ OGL وطلع التقرير وحدث نشاط الحفر")] // long, several tasks
+        [InlineData("قطع وردم ملف today.csv")]          // file name → needs AI
+        [InlineData("قطع وردم بخلية 0.5")]             // number → needs AI
+        [InlineData("حصر كميات وبريمافيرا")]            // two different tasks
+        [InlineData("ازيك")]                             // chit-chat → AI
+        [InlineData("ارسم دايرة نصف قطرها")]            // drawing → AI
+        public void DetailedRequestsGoToAi(string text) => Assert.Null(LocalIntents.Match(text));
     }
 
     public class OfficeTests

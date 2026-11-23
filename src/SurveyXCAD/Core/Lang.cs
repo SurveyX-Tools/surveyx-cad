@@ -20,12 +20,13 @@ namespace SurveyX.Core
 
         private static readonly Dictionary<string, string> EnDict = new Dictionary<string, string>
         {
-            {"AiTitle","SurveyX Assistant"},
+            {"AiTitle","Shalaby — AI assistant"},
+            {"AiLocal","Opening {0} directly — free, no AI used. For anything detailed, write a full sentence."},
             {"AiNew","New chat"},
             {"AiSend","Send"},
             {"AiStop","Stop"},
             {"AiYou","You"},
-            {"AiWelcome","Hi! Tell me what you need, e.g. \"cut & fill of today's survey against the OGL for Zone A with a PDF report\", \"check kerb levels against design ±10 mm\", \"quantity take-off of the kerb and pipe layers to Excel\", or \"update the excavation activity in Primavera\".\nI work inside this drawing and save reports in Documents\\SurveyX."},
+            {"AiWelcome","Hi, I'm Shalaby! Tell me what you need, e.g. \"cut & fill of today's survey against the OGL for Zone A with a PDF report\", \"check kerb levels against design ±10 mm\", \"quantity take-off of the kerb and pipe layers to Excel\", or \"update the excavation activity in Primavera\".\nI work inside this drawing and save reports in Documents\\SurveyX.\n⚡ Short requests like \"cut fill\", \"take-off\" or \"primavera\" open the tool directly for free."},
             {"AiNoKey","The assistant needs your Claude API key: press ⚙ and paste it in Settings → AI assistant. All other SurveyX tools work without it."},
             {"AiThinking","Working…"},
             {"AiStopped","Stopped."},
@@ -79,8 +80,8 @@ namespace SurveyX.Core
             {"AiModelOpus","Claude Opus 5.5 — strongest"},
             {"AiKeyNote","Each user enters their own key. It is stored encrypted for this Windows user only and is sent only to Claude. Usage is billed to that key's account."},
             {"RibAi","AI"},
-            {"RibAssistant","Assistant"},
-            {"TipAi","Tell the assistant what you need — it uses all SurveyX, AutoCAD, Civil 3D and Primavera tools (SXAI)"},
+            {"RibAssistant","Shalaby"},
+            {"TipAi","Tell Shalaby what you need — it uses all SurveyX, AutoCAD, Civil 3D and Primavera tools (SXAI)"},
             {"RibOffice","Technical office"},
             {"RibQto","Take-off"},
             {"RibSetOut","Setting out"},
@@ -426,12 +427,13 @@ namespace SurveyX.Core
 
         private static readonly Dictionary<string, string> Ar = new Dictionary<string, string>
         {
-            {"AiTitle","المساعد الذكي"},
+            {"AiTitle","شلبي — المساعد الذكي"},
+            {"AiLocal","فتحتلك {0} على طول — ببلاش من غير ذكاء اصطناعي. لو عايز حاجة بتفاصيل، اكتبها في جملة كاملة."},
             {"AiNew","محادثة جديدة"},
             {"AiSend","إرسال"},
             {"AiStop","إيقاف"},
             {"AiYou","إنت"},
-            {"AiWelcome","أهلًا! قولّي محتاج إيه، مثلًا: \"احسب قطع وردم رفع النهارده قصاد الـ OGL للمنطقة A وطلّع تقرير PDF\"، أو \"افحص مناسيب البردورة قصاد التصميم ±10 مم\"، أو \"اعمل حصر كميات لطبقات البردورة والمواسير على Excel\"، أو \"حدّث نشاط الحفر في بريمافيرا\".\nأنا شغال جوه الرسمة دي، والتقارير بتتحفظ في Documents\\SurveyX."},
+            {"AiWelcome","أهلًا، أنا شلبي! قولّي محتاج إيه، مثلًا: \"احسب قطع وردم رفع النهارده قصاد الـ OGL للمنطقة A وطلّع تقرير PDF\"، أو \"افحص مناسيب البردورة قصاد التصميم ±10 مم\"، أو \"اعمل حصر كميات لطبقات البردورة والمواسير على Excel\"، أو \"حدّث نشاط الحفر في بريمافيرا\".\nأنا شغال جوه الرسمة دي، والتقارير بتتحفظ في Documents\\SurveyX.\n⚡ الطلبات القصيرة زي \"قطع وردم\" أو \"حصر كميات\" أو \"بريمافيرا\" بتفتح الأداة على طول ببلاش."},
             {"AiNoKey","المساعد محتاج مفتاح Claude الخاص بيك: دوس ⚙ وحطه في الإعدادات ← المساعد الذكي. باقي أدوات SurveyX شغالة من غيره."},
             {"AiThinking","بيشتغل…"},
             {"AiStopped","اتوقف."},
@@ -485,8 +487,8 @@ namespace SurveyX.Core
             {"AiModelOpus","Claude Opus 5.5 — الأقوى"},
             {"AiKeyNote","كل مستخدم بيحط مفتاحه. المفتاح بيتحفظ متشفّر لمستخدم الويندوز ده بس، ومبيتبعتش غير لـ Claude. والاستخدام بيتحاسب على صاحب المفتاح."},
             {"RibAi","الذكاء"},
-            {"RibAssistant","المساعد"},
-            {"TipAi","قول للمساعد عايز إيه — بيستخدم كل أدوات SurveyX والأوتوكاد وسيفيل وبريمافيرا (SXAI)"},
+            {"RibAssistant","شلبي"},
+            {"TipAi","قول لشلبي عايز إيه — بيستخدم كل أدوات SurveyX والأوتوكاد وسيفيل وبريمافيرا (SXAI)"},
             {"RibOffice","المكتب الفني"},
             {"RibQto","حصر الكميات"},
             {"RibSetOut","جدول التوقيع"},

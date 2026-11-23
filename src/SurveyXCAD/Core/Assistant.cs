@@ -39,15 +39,32 @@ namespace SurveyX.Core
 
     public sealed class Usage
     {
-        public long InputTokens, OutputTokens;
+        public long InputTokens, OutputTokens, CacheWrite5m, CacheWrite1h, CacheRead;
+        public long TotalTokens => InputTokens + OutputTokens + CacheWrite5m + CacheWrite1h + CacheRead;
+
+        /// <summary>Approximate cost in USD from the published per-million-token prices and prompt-caching multipliers.</summary>
         public double CostUsd(string model)
         {
-            // prices per million tokens from the Claude models overview page
-            double pin = 2, pout = 10;
+            double pin = 2, pout = 10, readMul = 0.05;
             if (model.Contains("opus")) { pin = 4; pout = 20; }
-            else if (model.Contains("haiku")) { pin = 0.10; pout = 0.50; }
-            else if (model.Contains("fable")) { pin = 8; pout = 40; }
-            return InputTokens / 1e6 * pin + OutputTokens / 1e6 * pout;
+            else if (model.Contains("haiku")) { pin = 0.10; pout = 0.50; readMul = 0.1; }
+            else if (model.Contains("fable")) { pin = 8; pout = 40; readMul = 0.1; }
+            return (InputTokens * pin + OutputTokens * pout + CacheWrite5m * pin * 1.25 + CacheWrite1h * pin * 2 + CacheRead * pin * readMul) / 1e6;
+        }
+
+        public void Add(Dictionary<string, object> u)
+        {
+            if (u == null) return;
+            InputTokens += (long)u.Num("input_tokens", 0);
+            OutputTokens += (long)u.Num("output_tokens", 0);
+            CacheRead += (long)u.Num("cache_read_input_tokens", 0);
+            var cc = u.Sub("cache_creation");
+            if (cc != null)
+            {
+                CacheWrite5m += (long)cc.Num("ephemeral_5m_input_tokens", 0);
+                CacheWrite1h += (long)cc.Num("ephemeral_1h_input_tokens", 0);
+            }
+            else CacheWrite5m += (long)u.Num("cache_creation_input_tokens", 0);
         }
     }
 
@@ -108,6 +125,7 @@ namespace SurveyX.Core
         public string Model = "claude-sonnet-5-5";
         public int MaxTokens = 4096;
         public int MaxToolRounds = 30;
+        public int MaxToolResultChars = 8000;   // long tool results are shortened to save tokens
         public string SystemPrompt;
         public List<ToolSpec> Tools = new List<ToolSpec>();
         public Usage Usage { get; } = new Usage();
@@ -123,17 +141,46 @@ namespace SurveyX.Core
 
         public void Reset() => Messages.Clear();
 
+        /// <summary>
+        /// Builds the request with prompt caching: one 1-hour breakpoint on the system prompt (caches tools + system,
+        /// identical for every question) and one 5-minute breakpoint on the newest message (reused between tool rounds).
+        /// </summary>
         public string BuildRequest()
         {
             var body = new Dictionary<string, object>
             {
                 { "model", Model },
                 { "max_tokens", MaxTokens },
-                { "messages", Messages },
+                { "messages", WithMessageBreakpoint(Messages) },
             };
-            if (!string.IsNullOrEmpty(SystemPrompt)) body["system"] = SystemPrompt;
             if (Tools.Count > 0) body["tools"] = Tools.Select(t => (object)t.ToJson()).ToList();
+            if (!string.IsNullOrEmpty(SystemPrompt))
+                body["system"] = new List<object>
+                {
+                    new Dictionary<string, object>
+                    {
+                        { "type", "text" }, { "text", SystemPrompt },
+                        { "cache_control", new Dictionary<string, object> { { "type", "ephemeral" }, { "ttl", "1h" } } },
+                    },
+                };
             return JsonWriter.Write(body);
+        }
+
+        private static List<object> WithMessageBreakpoint(List<object> messages)
+        {
+            if (messages.Count == 0) return messages;
+            var copy = new List<object>(messages);
+            var last = messages[messages.Count - 1] as Dictionary<string, object>;
+            if (last == null) return copy;
+            var blocks = last.TryGetValue("content", out var c) && c is List<object> l
+                ? new List<object>(l)
+                : new List<object> { new Dictionary<string, object> { { "type", "text" }, { "text", last.Str("content", "") } } };
+            if (blocks.Count == 0 || !(blocks[blocks.Count - 1] is Dictionary<string, object> lb)) return copy;
+            var marked = new Dictionary<string, object>(lb) { ["cache_control"] = new Dictionary<string, object> { { "type", "ephemeral" } } };
+            blocks[blocks.Count - 1] = marked;
+            var newLast = new Dictionary<string, object>(last) { ["content"] = blocks };
+            copy[copy.Count - 1] = newLast;
+            return copy;
         }
 
         /// <param name="runTool">Executes a tool (on the caller's thread) and returns the text result; throw to report an error.</param>
@@ -150,9 +197,7 @@ namespace SurveyX.Core
                 if (string.IsNullOrWhiteSpace(key)) throw new InvalidOperationException(Lang.T("AiNoKey"));
                 string json = await _transport.SendAsync(key, BuildRequest(), ct);
                 var res = MiniJson.Parse(json) as Dictionary<string, object> ?? throw new InvalidOperationException("Bad response");
-                var usage = res.Sub("usage");
-                Usage.InputTokens += (long)usage.Num("input_tokens", 0);
-                Usage.OutputTokens += (long)usage.Num("output_tokens", 0);
+                Usage.Add(res.Sub("usage"));
 
                 var content = res.List("content") ?? new List<object>();
                 Messages.Add(new Dictionary<string, object> { { "role", "assistant" }, { "content", content } });
@@ -170,6 +215,8 @@ namespace SurveyX.Core
                         string result; bool isError = false;
                         try { result = await runTool(name, input); }
                         catch (Exception ex) { result = "ERROR: " + ex.Message; isError = true; }
+                        if (result != null && result.Length > MaxToolResultChars)
+                            result = result.Substring(0, MaxToolResultChars) + " …[shortened to save tokens; ask for details if needed]";
                         var tr = new Dictionary<string, object> { { "type", "tool_result" }, { "tool_use_id", id }, { "content", result ?? "" } };
                         if (isError) tr["is_error"] = true;
                         toolResults.Add(tr);

@@ -20,6 +20,10 @@ OutputBaseFilename=SurveyXCAD_Setup_{#AppVer}
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
+SetupIconFile=surveyx.ico
+WizardImageFile=wizard_large.bmp
+WizardSmallImageFile=wizard_small.bmp
+UninstallDisplayIcon={app}\surveyx.ico
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 UninstallDisplayName=SurveyX CAD
@@ -34,6 +38,8 @@ FinishedLabel=SurveyX CAD is installed. Open AutoCAD or Civil 3D and look for th
 
 [Files]
 Source: "..\out\bundle\SurveyXCAD.bundle\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+
+Source: "surveyx.ico"; DestDir: "{app}"; Flags: ignoreversion
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}"

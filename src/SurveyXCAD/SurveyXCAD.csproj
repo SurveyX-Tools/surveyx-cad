@@ -25,6 +25,11 @@
     <NoWarn>$(NoWarn);MSB3277;CA1416;NU1701</NoWarn>
   </PropertyGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\logo.png" LogicalName="SurveyX.logo.png" />
+    <EmbeddedResource Include="Resources\surveyx.ico" LogicalName="SurveyX.surveyx.ico" />
+  </ItemGroup>
+
   <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
     <PackageReference Include="AutoCAD.NET" Version="24.0.0" ExcludeAssets="runtime" />
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />

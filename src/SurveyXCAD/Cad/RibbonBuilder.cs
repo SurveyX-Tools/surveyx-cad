@@ -43,7 +43,7 @@ namespace SurveyX.Cad
             ribbon.Tabs.Add(tab);
 
             tab.Panels.Add(Panel(Lang.T("RibAi"),
-                Btn(Lang.T("RibAssistant"), "SXAI", "AI", Color.FromRgb(0x7B, 0x1F, 0xA2), Lang.T("TipAi"))));
+                Btn(Lang.T("RibAssistant"), "SXAI", "LOGO", Color.FromRgb(0x08, 0x24, 0x40), Lang.T("TipAi"))));
 
             tab.Panels.Add(Panel(Lang.T("RibPoints"),
                 Btn(Lang.T("RibImport"), "SXIMPORT", "IN", Color.FromRgb(0x1E, 0x88, 0xE5), Lang.T("TipImport")),
@@ -93,22 +93,47 @@ namespace SurveyX.Cad
             };
         }
 
-        private static ImageSource Icon(string glyph, Color color, int size)
+        private static readonly Color NavyBg = Color.FromRgb(0x08, 0x24, 0x40);
+        private static readonly Color TealFg = Color.FromRgb(0x56, 0xE3, 0xCF);
+        private static readonly Color AmberFg = Color.FromRgb(0xFA, 0xBA, 0x3E);
+        private static int _glyphIndex;
+
+        /// <summary>Brand icon: navy rounded square with the glyph in teal or amber (alternating); "LOGO" uses the SurveyX logo.</summary>
+        private static ImageSource Icon(string glyph, Color unused, int size)
         {
+            if (glyph == "LOGO") return LogoImage(size);
+            var fg = (_glyphIndex++ / 2) % 2 == 0 ? TealFg : AmberFg; // same colour for the 32 px and 16 px pair
             var dv = new DrawingVisual();
             using (var dc = dv.RenderOpen())
             {
                 var rect = new Rect(1, 1, size - 2, size - 2);
-                dc.DrawRoundedRectangle(new SolidColorBrush(color), null, rect, size / 6.0, size / 6.0);
+                dc.DrawRoundedRectangle(new SolidColorBrush(NavyBg), new Pen(new SolidColorBrush(fg), size >= 32 ? 1.5 : 1), rect, size / 5.0, size / 5.0);
                 var ft = new FormattedText(glyph, System.Globalization.CultureInfo.InvariantCulture, FlowDirection.LeftToRight,
                     new Typeface(new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.Bold, FontStretches.Normal),
-                    glyph.Length > 2 ? size * 0.32 : size * 0.45, Brushes.White, 1.0);
+                    glyph.Length > 2 ? size * 0.32 : size * 0.45, new SolidColorBrush(fg), 1.0);
                 dc.DrawText(ft, new Point((size - ft.Width) / 2, (size - ft.Height) / 2));
             }
             var bmp = new RenderTargetBitmap(size, size, 96, 96, PixelFormats.Pbgra32);
             bmp.Render(dv);
             bmp.Freeze();
             return bmp;
+        }
+
+        private static ImageSource LogoImage(int size)
+        {
+            try
+            {
+                var s = typeof(RibbonBuilder).Assembly.GetManifestResourceStream("SurveyX.logo.png");
+                var img = new BitmapImage();
+                img.BeginInit();
+                img.StreamSource = s;
+                img.DecodePixelWidth = size;
+                img.CacheOption = BitmapCacheOption.OnLoad;
+                img.EndInit();
+                img.Freeze();
+                return img;
+            }
+            catch { return null; }
         }
 
         private sealed class CmdHandler : System.Windows.Input.ICommand

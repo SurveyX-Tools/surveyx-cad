@@ -134,6 +134,19 @@ namespace SurveyX.Preview
                 Lang.Set(lang);
                 Step($"report_cumulative_{lang}", () => Report(ReportFactory.Cumulative(CutFillLog.Filter("Zone A", null, null), "Zone A"), $"report_cumulative_{lang}"));
                 Step($"assistant_chat_{lang}", () => Chat(lang, cf));
+                Step($"assistant_free_{lang}", () =>
+                {
+                    var t = new ScriptTransport(); // no responses queued: any AI call would fail the test
+                    string ran = null;
+                    var chat = new ChatControl(AssistantSpecs.Specs, (n, i) => Task.FromResult(""), AssistantSpecs.SystemPrompt, null, t, cmd => ran = cmd) { Dock = DockStyle.Fill };
+                    var f = new Form { Size = new Size(440, 720), RightToLeft = lang == "ar" ? RightToLeft.Yes : RightToLeft.No };
+                    f.Controls.Add(chat);
+                    f.StartPosition = FormStartPosition.Manual; f.Location = new Point(0, 0); f.Show();
+                    chat.SendText(lang == "ar" ? "حصر كميات" : "quantity take-off").Wait(2000);
+                    Application.DoEvents();
+                    if (ran != "SXQTO") throw new Exception("free path did not run SXQTO (ran: " + ran + ")");
+                    Shot(f, $"assistant_free_{lang}");
+                });
                 Step($"report_cutfill_{lang}", () => Report(ReportFactory.CutFill(cf, null, lang == "ar" ? "المنطقة A" : "Zone A", new DateTime(2026, 11, 23), "OGL_RAWDA.csv", "Survey_2026-11-23.csv", survey.Count), $"report_cutfill_{lang}"));
                 Step($"report_level_{lang}", () => Report(ReportFactory.LevelCheck(lc, Lang.T("PresetKerb"), Lang.T("ModeSurface")), $"report_level_{lang}"));
                 Step($"report_p6_{lang}", () => Report(ReportFactory.Progress(sched), $"report_p6_{lang}"));

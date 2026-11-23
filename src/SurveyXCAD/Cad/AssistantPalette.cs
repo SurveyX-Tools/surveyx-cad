@@ -24,13 +24,15 @@ namespace SurveyX.Cad
             if (_ps == null)
             {
                 _lang = Settings.Current.Language;
-                _ps = new PaletteSet("SurveyX Assistant", new Guid("6f0c2a4e-8d1b-4b7e-9a51-3c2e7d9a1f44"))
+                _ps = new PaletteSet("Shalaby — SurveyX", new Guid("6f0c2a4e-8d1b-4b7e-9a51-3c2e7d9a1f44"))
                 {
                     Style = PaletteSetStyles.ShowCloseButton | PaletteSetStyles.ShowAutoHideButton | PaletteSetStyles.ShowPropertiesMenu,
                     MinimumSize = new Size(340, 420),
                 };
-                var chat = new ChatControl(AssistantSpecs.Specs, AssistantTools.Run, AssistantSpecs.SystemPrompt, OpenSettings);
+                var chat = new ChatControl(AssistantSpecs.Specs, AssistantTools.Run, AssistantSpecs.SystemPrompt, OpenSettings, null,
+                    cmd => AcApp.DocumentManager.MdiActiveDocument?.SendStringToExecute("_" + cmd + " ", true, false, true));
                 _ps.Add(Lang.T("AiTitle"), chat);
+                try { if (SurveyX.UI.Brand.Icon != null) _ps.Icon = SurveyX.UI.Brand.Icon; } catch { }
                 _ps.Size = new Size(430, 720);
                 _ps.DockEnabled = DockSides.Left | DockSides.Right;
             }

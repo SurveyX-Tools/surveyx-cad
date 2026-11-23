@@ -31,7 +31,7 @@ namespace SurveyX.UI
     public static class ReportBuilder
     {
         private const int W = 1240, H = 1754, M = 70; // A4 @150 dpi
-        private static readonly Color Accent = Color.FromArgb(0x15, 0x65, 0xC0);
+        private static readonly Color Accent = Brand.Navy;
         private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
         public const int MaxTableRows = 1500;
 
@@ -174,6 +174,7 @@ namespace SurveyX.UI
             }
             c.Y += hh + 12;
             using (var p = new Pen(Accent, 4)) c.G.DrawLine(p, M, c.Y, W - M, c.Y);
+            using (var p = new Pen(Brand.Teal, 4)) c.G.DrawLine(p, M, c.Y + 5, M + (W - 2 * M) / 4, c.Y + 5);
             c.Y += 22;
         }
 
@@ -332,10 +333,11 @@ namespace SurveyX.UI
                     c.G = g;
                     g.TextRenderingHint = TextRenderingHint.AntiAliasGridFit;
                     g.DrawLine(Pens.LightGray, M, H - M + 4, W - M, H - M + 4);
+                    if (Brand.Logo != null) g.DrawImage(Brand.Logo, c.Rtl ? M : W - M - 28, H - M + 10, 28, 28);
                     string left = AppInfo.Name + " — " + DateTime.Now.ToString("yyyy-MM-dd HH:mm", Inv);
                     string right = string.Format(Lang.T("PageOf"), i + 1, n);
                     Text(c, left, c.Small, Color.Gray, R(c, M, H - M + 10, (W - 2 * M) / 2, 30));
-                    Text(c, right, c.Small, Color.Gray, R(c, M + (W - 2 * M) / 2, H - M + 10, (W - 2 * M) / 2, 30), StringAlignment.Far);
+                    Text(c, right, c.Small, Color.Gray, R(c, M + (W - 2 * M) / 2, H - M + 10, (W - 2 * M) / 2 - 36, 30), StringAlignment.Far);
                 }
             }
             c.G = null;

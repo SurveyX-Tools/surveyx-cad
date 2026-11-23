@@ -10,8 +10,8 @@ namespace SurveyX.UI
     /// <summary>Shared look &amp; feel: Arabic RTL support, help button, colours, small factory helpers.</summary>
     public class SxForm : Form
     {
-        public static readonly Color Accent = Color.FromArgb(0x15, 0x65, 0xC0);
-        public static readonly Color Soft = Color.FromArgb(0xF4, 0xF7, 0xFB);
+        public static readonly Color Accent = Brand.Navy;
+        public static readonly Color Soft = Color.FromArgb(0xF1, 0xF6, 0xF8);
 
         protected readonly string HelpKey;
 
@@ -32,6 +32,7 @@ namespace SurveyX.UI
                 RightToLeftLayout = true;
             }
             KeyDown += (s, e) => { if (e.KeyCode == Keys.F1) ShowHelp(); };
+            if (Brand.Icon != null) { Icon = Brand.Icon; ShowIcon = true; }
         }
 
         public void ShowHelp() => UiKit.Info(Lang.T(HelpKey), Lang.T("Help"));
@@ -39,9 +40,13 @@ namespace SurveyX.UI
         /// <summary>Header strip with title and a ❓ help button.</summary>
         protected Control Header(string subtitleKey)
         {
-            var p = new TableLayoutPanel { Dock = DockStyle.Top, Height = 56, BackColor = Accent, ColumnCount = 2, Padding = new Padding(12, 6, 12, 6) };
+            var wrap = new Panel { Dock = DockStyle.Top, Height = 60, BackColor = Accent };
+            var strip = new Panel { Dock = DockStyle.Bottom, Height = 3, BackColor = Brand.Teal };
+            var p = new TableLayoutPanel { Dock = DockStyle.Fill, BackColor = Accent, ColumnCount = 3, Padding = new Padding(10, 6, 12, 6) };
+            p.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 46));
             p.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             p.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 44));
+            var logo = new PictureBox { Image = Brand.LogoSized(40), Size = new Size(40, 40), SizeMode = PictureBoxSizeMode.Zoom, Anchor = AnchorStyles.None, Margin = new Padding(0) };
             var lbl = new Label
             {
                 Text = Lang.T(subtitleKey), ForeColor = Color.White, Dock = DockStyle.Fill,
@@ -49,15 +54,18 @@ namespace SurveyX.UI
             };
             var help = new Button
             {
-                Text = "؟", Width = 38, Height = 38, FlatStyle = FlatStyle.Flat, ForeColor = Color.White, BackColor = Accent,
+                Text = "؟", Width = 38, Height = 38, FlatStyle = FlatStyle.Flat, ForeColor = Brand.TealLight, BackColor = Accent,
                 Font = new Font("Segoe UI", 13f, FontStyle.Bold), Cursor = Cursors.Hand, Anchor = AnchorStyles.None,
             };
-            help.FlatAppearance.BorderColor = Color.White;
+            help.FlatAppearance.BorderColor = Brand.Teal;
             help.Click += (s, e) => ShowHelp();
             new ToolTip().SetToolTip(help, Lang.T("HelpTip"));
-            p.Controls.Add(lbl, 0, 0);
-            p.Controls.Add(help, 1, 0);
-            return p;
+            p.Controls.Add(logo, 0, 0);
+            p.Controls.Add(lbl, 1, 0);
+            p.Controls.Add(help, 2, 0);
+            wrap.Controls.Add(p);
+            wrap.Controls.Add(strip);
+            return wrap;
         }
     }
 
