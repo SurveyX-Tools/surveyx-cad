@@ -63,7 +63,7 @@ namespace SurveyX.UI
             Controls.Add(legend);
             Controls.Add(UiKit.ButtonBar(close));
 
-            _s = P6Store.Load();
+            _s = UiKit.TryLoadSchedule();
             Refresh2();
         }
 
@@ -139,7 +139,7 @@ namespace SurveyX.UI
             bool has = _s != null;
             foreach (Control c in _acts.Controls) c.Enabled = has;
             if (!has) { _head.Text = Lang.T("P6NoScheduleYet"); _grid.RowCount = 0; return; }
-            P6Store.Measure(_s);
+            try { P6Store.Measure(_s); } catch (System.IO.FileNotFoundException) { /* outside AutoCAD (preview tests) */ }
             _head.Text = string.Format(Lang.T("P6Header"), _s.ProjectName, _s.SourceFile, _s.DataDate?.ToString("yyyy-MM-dd", Inv) ?? "—",
                 _s.Activities.Count, _s.Activities.Count(a => a.LinkedObjects > 0));
             _grid.RowCount = 0;
@@ -261,29 +261,7 @@ namespace SurveyX.UI
             {
                 Cursor = Cursors.WaitCursor;
                 var st = Settings.Current;
-                var d = new ReportDoc { Title = Lang.T("P6ReportTitle") };
-                d.Info.Add((Lang.T("Project"), string.IsNullOrEmpty(st.ProjectName) ? _s.ProjectName : st.ProjectName));
-                d.Info.Add((Lang.T("Date"), DateTime.Today.ToString("yyyy-MM-dd", Inv)));
-                d.Info.Add((Lang.T("P6File"), _s.SourceFile));
-                d.Info.Add((Lang.T("DataDate"), _s.DataDate?.ToString("yyyy-MM-dd", Inv) ?? "—"));
-                var groups = _s.Activities.GroupBy(a => a.State(_s.DataDate)).ToDictionary(g => g.Key, g => g.Count());
-                foreach (ActivityState stt in Enum.GetValues(typeof(ActivityState)))
-                {
-                    var c = P6Store.StateColor(stt);
-                    d.Cards.Add((StateText(stt), (groups.TryGetValue(stt, out int k) ? k : 0).ToString(Inv), Color.FromArgb(c.r, c.g, c.b)));
-                }
-                d.TableTitle = Lang.T("P6Table");
-                d.Headers = new[] { Lang.T("P6Id"), Lang.T("P6Name"), Lang.T("P6Finish"), Lang.T("P6Pct"), Lang.T("PlannedQty"), Lang.T("ExecutedQty"), Lang.T("DrawingPct"), Lang.T("Status") };
-                d.ColWeights = new[] { 1.1f, 3f, 1.1f, 0.8f, 1f, 1f, 0.9f, 1.1f };
-                foreach (var a in _s.Activities)
-                {
-                    var c = P6Store.StateColor(a.State(_s.DataDate));
-                    d.Rows.Add(new[] { a.Id, a.Name, a.Finish?.ToString("yyyy-MM-dd", Inv) ?? "", a.P6Percent.ToString("0.#", Inv),
-                        a.PlannedQty > 0 ? a.PlannedQty.ToString("N2") + " " + a.Unit : "", a.ExecutedQty > 0 ? a.ExecutedQty.ToString("N2") + " " + a.Unit : "",
-                        a.DrawingPercent >= 0 ? a.DrawingPercent.ToString("0.#", Inv) + "%" : "—", StateText(a.State(_s.DataDate)) });
-                    d.RowColors.Add(Color.FromArgb(60, c.r, c.g, c.b).Blend());
-                }
-                d.Notes.Add(Lang.T("NoteP6"));
+                var d = ReportFactory.Progress(_s);
                 ReportBuilder.SavePdf(d, path);
                 if (UiKit.Ask(Lang.T("ReportSavedOpen") + "\n" + path)) UiKit.OpenUrl(path);
             }

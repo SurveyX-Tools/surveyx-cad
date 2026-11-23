@@ -64,7 +64,7 @@ namespace SurveyX.UI
             var bAdd = UiKit.Btn("AddToActivity"); bAdd.Click += (s, e) => AddToActivity();
             var p6Bar = new FlowLayoutPanel { Dock = DockStyle.Bottom, AutoSize = true, Padding = new Padding(6), BackColor = Soft };
             p6Bar.Controls.Add(UiKit.Lbl("Primavera", true)); p6Bar.Controls.Add(_act); p6Bar.Controls.Add(_which); p6Bar.Controls.Add(bAdd);
-            _p6 = P6Store.Load();
+            _p6 = UiKit.TryLoadSchedule();
             if (_p6 != null) foreach (var a in _p6.Activities) _act.Items.Add(a.Id + " — " + a.Name);
             if (_act.Items.Count > 0) _act.SelectedIndex = 0; else { _act.Items.Add(Lang.T("NoSchedule")); _act.SelectedIndex = 0; _act.Enabled = false; bAdd.Enabled = false; }
 
@@ -176,50 +176,9 @@ namespace SurveyX.UI
             {
                 Cursor = Cursors.WaitCursor;
                 var st = Settings.Current;
-                var d = new ReportDoc { Title = Lang.T("CutFillReportTitle") + (string.IsNullOrWhiteSpace(_area.Text) ? "" : " — " + _area.Text) };
-                d.Info.Add((Lang.T("Project"), st.ProjectName));
-                d.Info.Add((Lang.T("Date"), _date.Value.ToString("yyyy-MM-dd", Inv)));
-                d.Info.Add((Lang.T("OglSourceShort"), _ogl.FilePath != null ? Path.GetFileName(_ogl.FilePath) : Lang.T("Drawing")));
-                d.Info.Add((Lang.T("NewSurveyShort"), _new.FilePath != null ? Path.GetFileName(_new.FilePath) : Lang.T("Drawing")));
-                d.Info.Add((Lang.T("Method"), Lang.T("GridMethod") + " " + _r.Cell.ToString("0.###", Inv) + " m"));
-                d.Info.Add((Lang.T("PointsCount"), _new.Points.Count.ToString(Inv)));
-                d.Cards.Add((Lang.T("CutVolume"), _r.CutVolume.ToString("N2") + " m³", Color.FromArgb(229, 57, 53)));
-                d.Cards.Add((Lang.T("FillVolume"), _r.FillVolume.ToString("N2") + " m³", Color.FromArgb(30, 136, 229)));
-                d.Cards.Add((Lang.T("Net"), _r.NetVolume.ToString("N2") + " m³", Color.FromArgb(96, 125, 139)));
-                d.Cards.Add((Lang.T("TotalArea"), _r.TotalArea.ToString("N1") + " m²", Color.FromArgb(67, 160, 71)));
-                d.Cards.Add((Lang.T("MaxCut"), _r.MaxCut.ToString("0.000") + " m", Color.FromArgb(183, 28, 28)));
-                d.Cards.Add((Lang.T("MaxFill"), _r.MaxFill.ToString("0.000") + " m", Color.FromArgb(13, 71, 161)));
-                d.Cards.Add((Lang.T("CutArea"), _r.CutArea.ToString("N1") + " m²", Color.FromArgb(239, 154, 154)));
-                d.Cards.Add((Lang.T("FillArea"), _r.FillArea.ToString("N1") + " m²", Color.FromArgb(100, 181, 246)));
-                d.Map = MapRenderer.CutFill(_r, _boundary.Polygon);
-                d.MapTitle = Lang.T("CutFillMap");
-                for (int i = 0; i < ColorScale.CutFillColors.Length; i++)
-                {
-                    var c = ColorScale.CutFillColors[i];
-                    d.Legend.Add((Color.FromArgb(c.r, c.g, c.b), ColorScale.CutFillLabel(i)));
-                }
-                d.TableTitle = Lang.T("PointDiffTable");
-                d.Headers = new[] { "#", Lang.T("ColName"), "E", "N", Lang.T("NewZ"), Lang.T("OglZ"), Lang.T("Diff") };
-                d.ColWeights = new[] { 0.6f, 1.2f, 1.6f, 1.8f, 1.2f, 1.2f, 1.1f };
-                int k = 1;
-                foreach (var p in _r.Points)
-                {
-                    bool has = !double.IsNaN(p.RefZ);
-                    d.Rows.Add(new[]
-                    {
-                        (k++).ToString(Inv), p.Point.Name, p.Point.E.ToString("F3", Inv), p.Point.N.ToString("F3", Inv), p.Point.Z.ToString("F3", Inv),
-                        has ? p.RefZ.ToString("F3", Inv) : "—", has ? (p.Diff >= 0 ? "+" : "") + p.Diff.ToString("F3", Inv) : "—",
-                    });
-                    if (!has) d.RowColors.Add(null);
-                    else
-                    {
-                        var c = ColorScale.CutFillColors[ColorScale.CutFillClass(p.Diff)];
-                        d.RowColors.Add(Color.FromArgb(70, c.r, c.g, c.b).Blend());
-                    }
-                }
-                d.Notes.Add(Lang.T("NoteDiffSign"));
-                d.Notes.Add(string.Format(Lang.T("NoteGrid"), _r.Cell.ToString("0.###", Inv)));
-                if (_boundary.Polygon != null) d.Notes.Add(Lang.T("NoteBoundary"));
+                var d = ReportFactory.CutFill(_r, _boundary.Polygon, _area.Text, _date.Value,
+                    _ogl.FilePath != null ? Path.GetFileName(_ogl.FilePath) : Lang.T("Drawing"),
+                    _new.FilePath != null ? Path.GetFileName(_new.FilePath) : Lang.T("Drawing"), _new.Points.Count);
                 ReportBuilder.SavePdf(d, path);
                 WriteCsv(Path.ChangeExtension(path, ".csv"));
                 if (UiKit.Ask(Lang.T("ReportSavedOpen") + "\n" + path)) UiKit.OpenUrl(path);

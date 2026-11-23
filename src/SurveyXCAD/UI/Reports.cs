@@ -46,6 +46,29 @@ namespace SurveyX.UI
 
         public static void SavePdf(ReportDoc d, string path)
         {
+            var bitmaps = RenderPages(d);
+            try
+            {
+                var pages = new List<PdfWriter.Page>();
+                var jpg = ImageCodecInfo.GetImageEncoders().First(e => e.FormatID == ImageFormat.Jpeg.Guid);
+                var ep = new EncoderParameters(1);
+                ep.Param[0] = new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, 90L);
+                foreach (var b in bitmaps)
+                {
+                    using (var ms = new MemoryStream())
+                    {
+                        b.Save(ms, jpg, ep);
+                        pages.Add(new PdfWriter.Page { Jpeg = ms.ToArray(), PixelWidth = b.Width, PixelHeight = b.Height });
+                    }
+                }
+                PdfWriter.Write(path, pages, d.Title, Settings.Current.PreparedBy);
+            }
+            finally { foreach (var b in bitmaps) b.Dispose(); }
+        }
+
+        /// <summary>Renders the report as A4 page bitmaps (150 dpi). Caller disposes them.</summary>
+        public static List<Bitmap> RenderPages(ReportDoc d)
+        {
             var c = new Ctx { Rtl = Lang.IsArabic };
             c.Body = new Font("Segoe UI", 21, GraphicsUnit.Pixel);
             c.Small = new Font("Segoe UI", 17, GraphicsUnit.Pixel);
@@ -62,23 +85,15 @@ namespace SurveyX.UI
                 Notes(c, d);
                 c.G.Dispose();
                 Footers(c);
-                var pages = new List<PdfWriter.Page>();
-                var jpg = ImageCodecInfo.GetImageEncoders().First(e => e.FormatID == ImageFormat.Jpeg.Guid);
-                var ep = new EncoderParameters(1);
-                ep.Param[0] = new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, 90L);
-                foreach (var b in c.Pages)
-                {
-                    using (var ms = new MemoryStream())
-                    {
-                        b.Save(ms, jpg, ep);
-                        pages.Add(new PdfWriter.Page { Jpeg = ms.ToArray(), PixelWidth = b.Width, PixelHeight = b.Height });
-                    }
-                }
-                PdfWriter.Write(path, pages, d.Title, Settings.Current.PreparedBy);
+                return c.Pages;
+            }
+            catch
+            {
+                foreach (var b in c.Pages) b.Dispose();
+                throw;
             }
             finally
             {
-                foreach (var b in c.Pages) b.Dispose();
                 c.Body.Dispose(); c.Small.Dispose(); c.Bold.Dispose(); c.Title.Dispose(); c.Big.Dispose();
             }
         }

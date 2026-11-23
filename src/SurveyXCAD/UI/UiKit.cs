@@ -74,6 +74,17 @@ namespace SurveyX.UI
         public static bool Ask(string msg) =>
             MessageBox.Show(msg, AppInfo.Name, MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1, Rtl) == DialogResult.Yes;
 
+        /// <summary>Schedule stored in the current drawing, or null (also null when running outside AutoCAD).</summary>
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+        public static P6Schedule TryLoadSchedule()
+        {
+            try { return LoadScheduleCore(); }
+            catch (Exception) { return null; }
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+        private static P6Schedule LoadScheduleCore() => SurveyX.Cad.P6Store.Load();
+
         public static void OpenUrl(string url)
         {
             try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); }

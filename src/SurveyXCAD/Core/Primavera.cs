@@ -257,6 +257,20 @@ namespace SurveyX.Core
         }
     }
 
+    public static class P6Colors
+    {
+        public static (byte r, byte g, byte b) StateColor(ActivityState st)
+        {
+            switch (st)
+            {
+                case ActivityState.Completed: return (67, 160, 71);
+                case ActivityState.InProgress: return (251, 140, 0);
+                case ActivityState.Late: return (229, 57, 53);
+                default: return (158, 158, 158);
+            }
+        }
+    }
+
     /// <summary>Weighted progress of one activity from its linked drawing objects.</summary>
     public static class ProgressCalc
     {

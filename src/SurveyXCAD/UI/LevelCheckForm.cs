@@ -117,7 +117,7 @@ namespace SurveyX.UI
             };
         }
 
-        private static string StatusText(CheckStatus s) => s == CheckStatus.Pass ? Lang.T("Pass") : s == CheckStatus.Fail ? Lang.T("Fail") : Lang.T("NoDesignShort");
+        internal static string StatusText(CheckStatus s) => s == CheckStatus.Pass ? Lang.T("Pass") : s == CheckStatus.Fail ? Lang.T("Fail") : Lang.T("NoDesignShort");
 
         private void Run()
         {
@@ -148,7 +148,7 @@ namespace SurveyX.UI
             finally { Cursor = Cursors.Default; }
         }
 
-        private static string Signed(double v) => (v >= 0 ? "+" : "") + v.ToString("0.000", CultureInfo.InvariantCulture);
+        internal static string Signed(double v) => (v >= 0 ? "+" : "") + v.ToString("0.000", CultureInfo.InvariantCulture);
 
         private void Draw()
         {
@@ -188,37 +188,7 @@ namespace SurveyX.UI
             {
                 Cursor = Cursors.WaitCursor;
                 var st = Settings.Current;
-                var d = new ReportDoc { Title = Lang.T("LevelReportTitle") + (string.IsNullOrWhiteSpace(_element.Text) ? "" : " — " + _element.Text) };
-                d.Info.Add((Lang.T("Project"), st.ProjectName));
-                d.Info.Add((Lang.T("Date"), DateTime.Today.ToString("yyyy-MM-dd", Inv)));
-                d.Info.Add((Lang.T("Tolerance"), "+" + (_r.TolPlus * 1000).ToString("0") + " / −" + (_r.TolMinus * 1000).ToString("0") + " mm"));
-                d.Info.Add((Lang.T("DesignMode"), (string)_mode.SelectedItem));
-                d.Cards.Add((Lang.T("Checked"), (_r.Pass + _r.Fail).ToString(Inv), Color.FromArgb(96, 125, 139)));
-                d.Cards.Add((Lang.T("Pass"), _r.Pass.ToString(Inv), Color.FromArgb(67, 160, 71)));
-                d.Cards.Add((Lang.T("Fail"), _r.Fail.ToString(Inv), Color.FromArgb(229, 57, 53)));
-                d.Cards.Add((Lang.T("PassRate"), _r.PassPercent.ToString("0.0") + "%", Color.FromArgb(30, 136, 229)));
-                d.Cards.Add((Lang.T("MaxAbove"), Signed(_r.MaxAbove), Color.FromArgb(30, 136, 229)));
-                d.Cards.Add((Lang.T("MaxBelow"), Signed(_r.MaxBelow), Color.FromArgb(229, 57, 53)));
-                d.Cards.Add((Lang.T("MeanDiff"), Signed(_r.Mean), Color.FromArgb(96, 125, 139)));
-                d.Cards.Add((Lang.T("StdDev"), _r.StdDev.ToString("0.000", Inv), Color.FromArgb(96, 125, 139)));
-                var pts = _r.Rows.Where(r => r.Status != CheckStatus.NoDesign)
-                    .Select(r => (r.Point.E, r.Point.N, r.Status == CheckStatus.Pass ? Color.FromArgb(67, 160, 71) : Color.FromArgb(229, 57, 53))).ToList();
-                d.Map = MapRenderer.Points(pts, null);
-                d.MapTitle = Lang.T("LevelMap");
-                d.Legend.Add((Color.FromArgb(67, 160, 71), Lang.T("Pass")));
-                d.Legend.Add((Color.FromArgb(229, 57, 53), Lang.T("Fail")));
-                d.TableTitle = Lang.T("LevelTable");
-                d.Headers = new[] { "#", Lang.T("ColName"), "E", "N", Lang.T("AsBuiltZ"), Lang.T("DesignZ"), Lang.T("Diff"), Lang.T("Result") };
-                d.ColWeights = new[] { 0.6f, 1.1f, 1.6f, 1.8f, 1.2f, 1.2f, 1f, 1f };
-                int k = 1;
-                foreach (var r in _r.Rows)
-                {
-                    bool has = r.Status != CheckStatus.NoDesign;
-                    d.Rows.Add(new[] { (k++).ToString(Inv), r.Point.Name, r.Point.E.ToString("F3", Inv), r.Point.N.ToString("F3", Inv), r.Point.Z.ToString("F3", Inv),
-                        has ? r.DesignZ.ToString("F3", Inv) : "—", has ? Signed(r.Diff) : "—", StatusText(r.Status) });
-                    d.RowColors.Add(r.Status == CheckStatus.Pass ? Color.FromArgb(0xE3, 0xF5, 0xE4) : r.Status == CheckStatus.Fail ? Color.FromArgb(0xFF, 0xD6, 0xD6) : (Color?)null);
-                }
-                d.Notes.Add(Lang.T("NoteLevelSign"));
+                var d = ReportFactory.LevelCheck(_r, _element.Text, (string)_mode.SelectedItem);
                 ReportBuilder.SavePdf(d, path);
                 WriteCsv(Path.ChangeExtension(path, ".csv"));
                 if (UiKit.Ask(Lang.T("ReportSavedOpen") + "\n" + path)) UiKit.OpenUrl(path);
