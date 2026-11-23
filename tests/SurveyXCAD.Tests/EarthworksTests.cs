@@ -246,7 +246,7 @@ namespace SurveyX.Tests
             Assert.Contains("/Filter /DCTDecode", text);
             Assert.EndsWith("%%EOF\n", text);
             // xref offsets must point at "n 0 obj"
-            int xref = text.LastIndexOf("xref\n", StringComparison.Ordinal);
+            int xref = text.LastIndexOf("\nxref\n", StringComparison.Ordinal) + 1; // not the "startxref" line
             var lines = text.Substring(xref).Split('\n');
             int count = int.Parse(lines[1].Split(' ')[1]);
             for (int i = 1; i < count; i++)
