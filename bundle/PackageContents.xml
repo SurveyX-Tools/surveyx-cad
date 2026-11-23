@@ -3,8 +3,8 @@
     Name="SurveyX CAD" Description="Free surveying tools for AutoCAD and Civil 3D"
     AppVersion="1.0.0" FriendlyVersion="1.0.0"
     ProductCode="{11914421-1C44-4D52-858F-7BB82781094F}" UpgradeCode="{3CDA8BA8-0F3B-4FD9-8F5A-FB8937CBDF01}"
-    Author="Ahmed Gamal Shalaby" HelpFile="" OnlineDocumentation="https://github.com/ahmedshalaby6903-debug/surveyx-cad">
-  <CompanyDetails Name="Ahmed Gamal Shalaby" Url="https://github.com/ahmedshalaby6903-debug/surveyx-cad" Email="" />
+    Author="Ahmed Gamal Shalaby" HelpFile="" OnlineDocumentation="https://github.com/SurveyX-Tools/surveyx-cad">
+  <CompanyDetails Name="Ahmed Gamal Shalaby" Url="https://github.com/SurveyX-Tools/surveyx-cad" Email="" />
   <RuntimeRequirements OS="Win64" Platform="AutoCAD*" SeriesMin="R24.0" SeriesMax="R25.9" />
 
   <!-- AutoCAD / Civil 3D 2021 - 2024 (.NET Framework 4.8) -->

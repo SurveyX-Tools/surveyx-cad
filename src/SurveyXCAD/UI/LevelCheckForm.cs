@@ -160,11 +160,11 @@ namespace SurveyX.UI
             UiKit.Info(string.Format(Lang.T("LabelsDrawn"), items.Count, layer));
         }
 
-        private string Name(string ext) => "LevelCheck_" + (string.IsNullOrWhiteSpace(_element.Text) ? "" : CutFillForm.Safe(_element.Text) + "_") + DateTime.Today.ToString("yyyy-MM-dd", Inv) + ext;
+        private string FileNameFor(string ext) => "LevelCheck_" + (string.IsNullOrWhiteSpace(_element.Text) ? "" : CutFillForm.Safe(_element.Text) + "_") + DateTime.Today.ToString("yyyy-MM-dd", Inv) + ext;
 
         private void Csv()
         {
-            var path = UiKit.BrowseSave(this, "CSV|*.csv", Name(".csv"), out _);
+            var path = UiKit.BrowseSave(this, "CSV|*.csv", FileNameFor(".csv"), out _);
             if (path == null) return;
             WriteCsv(path);
             UiKit.Info(Lang.T("Saved") + "\n" + path);
@@ -182,7 +182,7 @@ namespace SurveyX.UI
 
         private void Pdf()
         {
-            var path = UiKit.BrowseSave(this, "PDF|*.pdf", Name(".pdf"), out _);
+            var path = UiKit.BrowseSave(this, "PDF|*.pdf", FileNameFor(".pdf"), out _);
             if (path == null) return;
             try
             {

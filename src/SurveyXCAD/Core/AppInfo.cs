@@ -6,7 +6,7 @@ namespace SurveyX.Core
     {
         public const string Name = "SurveyX CAD";
         public const string Author = "Ahmed Gamal Shalaby";
-        public const string GitHubOwner = "ahmedshalaby6903-debug";
+        public const string GitHubOwner = "SurveyX-Tools";
         public const string GitHubRepo = "surveyx-cad";
         public static string ReleasesUrl => "https://github.com/" + GitHubOwner + "/" + GitHubRepo + "/releases/latest";
         public static string LatestApiUrl => "https://api.github.com/repos/" + GitHubOwner + "/" + GitHubRepo + "/releases/latest";
