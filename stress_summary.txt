@@ -1,0 +1,17 @@
+SurveyX CAD stress test — 2026-11-23 19:44 UTC
+1. Coordinates vs official PROJ (21,000 pts)	42000	0	285 ms
+2. Coordinate round trips (1,000,000 pts)	1000000	0	2871 ms
+3. Cross-system chains (200,000 pts)	200000	0	1106 ms
+4. DMS angle parse/format (100,000)	100000	0	410 ms
+5. Delaunay triangulation (3,000 sets)	676091	0	3962 ms
+6. TIN interpolation on planes	402000	0	441 ms
+7. Cut & fill volumes (1,500 scenarios)	264538	0	2689 ms
+8. Contours on planes (500 surfaces)	663208	0	771 ms
+9. Level check classification (200,000)	200000	0	176 ms
+10. Chainage / offset (150,000)	150000	0	327 ms
+11. Point file readers (20,000 files)	424403	0	7992 ms
+12. Writers → readers round trip (3,000)	92952	0	1715 ms
+13. Primavera XER parsing (5,000 files)	162602	0	762 ms
+14. JSON round trip (100,000 objects)	100000	0	245 ms
+15. Shalaby free commands (200,000 msgs)	200000	0	595 ms
+TOTAL	4677794	0	24374 ms

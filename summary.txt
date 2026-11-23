@@ -1,0 +1,77 @@
+﻿Screen: 1024x768
+OGL TIN: 99,856 points → 199,649 triangles in 330 ms
+Cut/fill: 961 survey points, cell 0.2 m, cut 3,664.9 m3, fill 5,534.1 m3, area 22,672.6 m2 in 207 ms
+Analytic over same extent: cut 3,803.5, fill 5,624.4  → difference cut -3.64%, fill -1.61%
+Level check: 33 pass, 8 fail, 0 no design
+P6: A1000 30.5% InProgress, A1010 36.9% Late, A1020 100.0% Completed, R2000 0.0% NotStarted, R2010 0.0% Late
+     28 tools, 16 KB of definitions; system prompt 1793 chars
+OK   assistant_specs (17 ms)
+     sample_cumulative.xlsx: 16 rows readable
+     sample_cutfill.xlsx: 976 rows readable
+     sample_levelcheck.xlsx: 50 rows readable
+OK   excel_exports (107 ms)
+     report_cumulative_ar: 1 page(s), PDF 197 KB
+OK   report_cumulative_ar (277 ms)
+     assistant_chat_ar: 440x720 (screen)
+OK   assistant_chat_ar (1176 ms)
+     assistant_free_ar: 440x720 (screen)
+OK   assistant_free_ar (550 ms)
+     report_cutfill_ar: 26 page(s), PDF 7455 KB
+OK   report_cutfill_ar (2627 ms)
+     report_level_ar: 2 page(s), PDF 485 KB
+OK   report_level_ar (284 ms)
+     report_p6_ar: 1 page(s), PDF 150 KB
+OK   report_p6_ar (114 ms)
+     form_import_ar: 1000x720 (screen)
+OK   form_import_ar (694 ms)
+     form_convert_ar: 760x600 (screen)
+OK   form_convert_ar (599 ms)
+     form_export_ar: 620x420 (screen)
+OK   form_export_ar (469 ms)
+     form_cutfill_ar: 900x720 (screen)
+OK   form_cutfill_ar (601 ms)
+     form_level_ar: 1000x720 (screen)
+OK   form_level_ar (496 ms)
+     form_surface_ar: 780x640 (screen)
+OK   form_surface_ar (528 ms)
+     form_sections_ar: 820x700 (screen)
+OK   form_sections_ar (499 ms)
+     form_p6_ar: 1024x720 (screen)
+OK   form_p6_ar (512 ms)
+     form_settings_ar: 700x720 (screen)
+OK   form_settings_ar (669 ms)
+     form_about_ar: 640x560 (screen)
+OK   form_about_ar (475 ms)
+     report_cumulative_en: 1 page(s), PDF 201 KB
+OK   report_cumulative_en (120 ms)
+     assistant_chat_en: 440x720 (screen)
+OK   assistant_chat_en (514 ms)
+     assistant_free_en: 440x720 (screen)
+OK   assistant_free_en (475 ms)
+     report_cutfill_en: 26 page(s), PDF 7370 KB
+OK   report_cutfill_en (1475 ms)
+     report_level_en: 2 page(s), PDF 482 KB
+OK   report_level_en (224 ms)
+     report_p6_en: 1 page(s), PDF 158 KB
+OK   report_p6_en (88 ms)
+     form_import_en: 1000x720 (screen)
+OK   form_import_en (486 ms)
+     form_convert_en: 760x600 (screen)
+OK   form_convert_en (498 ms)
+     form_export_en: 620x420 (screen)
+OK   form_export_en (439 ms)
+     form_cutfill_en: 900x720 (screen)
+OK   form_cutfill_en (472 ms)
+     form_level_en: 1000x720 (screen)
+OK   form_level_en (493 ms)
+     form_surface_en: 780x640 (screen)
+OK   form_surface_en (482 ms)
+     form_sections_en: 820x700 (screen)
+OK   form_sections_en (460 ms)
+     form_p6_en: 1024x720 (screen)
+OK   form_p6_en (462 ms)
+     form_settings_en: 700x720 (screen)
+OK   form_settings_en (549 ms)
+     form_about_en: 640x560 (screen)
+OK   form_about_en (420 ms)
+ALL PREVIEWS OK
