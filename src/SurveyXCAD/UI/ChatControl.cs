@@ -52,7 +52,7 @@ namespace SurveyX.UI
 
             foreach (var k in new[] { "AiChip1", "AiChip2", "AiChip3", "AiChip4", "AiChip5" })
             {
-                var b = new Button { Text = Lang.T(k), AutoSize = true, FlatStyle = FlatStyle.Flat, BackColor = Color.White, Margin = new Padding(3), Cursor = Cursors.Hand, UseMnemonic = false };
+                var b = new Button { Text = Lang.T(k), AutoSize = true, FlatStyle = FlatStyle.Flat, BackColor = Color.White, Margin = new Padding(2), Cursor = Cursors.Hand, UseMnemonic = false, Font = new Font("Segoe UI", 8.5f) };
                 b.FlatAppearance.BorderColor = Color.FromArgb(0xC5, 0xD3, 0xE8);
                 b.Click += (s, e) => { _input.Text = ((Button)s).Text; _input.Focus(); _input.SelectionStart = _input.Text.Length; };
                 _chips.Controls.Add(b);
@@ -96,6 +96,7 @@ namespace SurveyX.UI
         {
             _session.Reset();
             _log.Clear();
+            _chips.Visible = true;
             Append(Lang.T("AiWelcome"), Color.FromArgb(60, 60, 60), false);
             if (string.IsNullOrEmpty(Secret.Unprotect(Settings.Current.ApiKeyProtected)))
                 Append(Lang.T("AiNoKey"), Color.FromArgb(0xC6, 0x28, 0x28), true);
@@ -145,6 +146,7 @@ namespace SurveyX.UI
                 return;
             }
             _input.Clear();
+            _chips.Visible = false; // suggestions only on an empty chat
             AppendUser(text);
             SetBusy(true);
             _cts = new CancellationTokenSource();

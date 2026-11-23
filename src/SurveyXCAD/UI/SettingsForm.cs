@@ -16,7 +16,7 @@ namespace SurveyX.UI
         private readonly CheckBox _chkUpd = new CheckBox { AutoSize = true };
         private readonly TextBox _company = new TextBox { Width = 320 }, _project = new TextBox { Width = 320 },
             _prepared = new TextBox { Width = 320 }, _submitted = new TextBox { Width = 320 }, _logo = new TextBox { Width = 250, ReadOnly = true };
-        private readonly TextBox _key = new TextBox { Width = 320, UseSystemPasswordChar = true };
+        private readonly TextBox _key = new TextBox { Width = 230, UseSystemPasswordChar = true };
         private readonly ComboBox _model = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 320 };
         private static readonly string[] Models = { "claude-sonnet-5-5", "claude-haiku-5-5", "claude-opus-5-5" };
         private readonly PictureBox _logoPreview = new PictureBox { Width = 120, Height = 60, SizeMode = PictureBoxSizeMode.Zoom, BorderStyle = BorderStyle.FixedSingle };
