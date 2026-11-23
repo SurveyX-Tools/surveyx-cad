@@ -34,6 +34,14 @@ jobs:
       - name: Unit tests (coordinate math, file readers/writers)
         run: dotnet test tests/SurveyXCAD.Tests/SurveyXCAD.Tests.csproj -c Release --logger "console;verbosity=normal"
 
+      - name: Stress test (more than 1,000,000 randomised checks)
+        if: github.event_name != 'release'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force out/previews | Out-Null
+          dotnet run -c Release --project tools/SurveyXCAD.Stress/SurveyXCAD.Stress.csproj -- "$PWD/out/previews/stress_summary.txt"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       - name: Build plugin (net48 + net8)
         run: >
           dotnet build src/SurveyXCAD/SurveyXCAD.csproj -c Release
